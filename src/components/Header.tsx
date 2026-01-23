@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Menu, X, LogOut, Shield } from "lucide-react";
+import { Menu, X, LogOut, Shield, User } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import logo from "@/assets/logo.png";
 
@@ -113,7 +113,17 @@ export const Header = () => {
             ))}
             <div className="flex flex-col gap-3 pt-4 border-t border-border">
               {user ? (
-                <Button onClick={() => { navigate('/dashboard'); setMobileMenuOpen(false); }}>Mi Panel</Button>
+                <>
+                  <Button variant="ghost" className="w-full justify-start" onClick={() => { navigate('/profile'); setMobileMenuOpen(false); }}>
+                    <User className="w-4 h-4 mr-2" />
+                    Mi Perfil
+                  </Button>
+                  <Button onClick={() => { navigate('/dashboard'); setMobileMenuOpen(false); }} className="w-full">Mi Panel</Button>
+                  <Button variant="destructive" className="w-full" onClick={() => { signOut(); setMobileMenuOpen(false); }}>
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Cerrar Sesión
+                  </Button>
+                </>
               ) : (
                 <Button onClick={() => { navigate('/auth'); setMobileMenuOpen(false); }}>Comenzar</Button>
               )}

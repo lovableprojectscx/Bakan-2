@@ -50,7 +50,7 @@ const Profile = () => {
       .select('*')
       .eq('id', user?.id)
       .single();
-    
+
     if (data) {
       setProfile(data);
       setNombreCompleto(data.nombre_completo);
@@ -63,7 +63,7 @@ const Profile = () => {
       .from('perfiles_financieros')
       .select('*')
       .eq('usuario_id', user?.id);
-    
+
     setPerfiles(data || []);
   };
 
@@ -131,7 +131,7 @@ const Profile = () => {
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${user?.id}/dni-${Date.now()}.${fileExt}`;
-      
+
       const { error: uploadError } = await supabase.storage
         .from('documentos-identidad')
         .upload(fileName, file);
@@ -258,6 +258,8 @@ const Profile = () => {
             </div>
           </CardContent>
         </Card>
+        {/* Extra space for mobile dropdowns */}
+        <div className="h-32 md:hidden" />
       </main>
     </div>
   );

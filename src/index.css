@@ -4,6 +4,10 @@
 
 @layer base {
   :root {
+    /* Safe Area Variables */
+    --safe-area-top: env(safe-area-inset-top);
+    --safe-area-bottom: env(safe-area-inset-bottom);
+
     /* Professional Light Mode (Default) */
     --background: 210 40% 98%;
     /* Very subtle cool gray */

@@ -227,16 +227,16 @@ const Auth = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-4 pt-[max(1rem,env(safe-area-inset-top))] pb-[max(1rem,env(safe-area-inset-bottom))]">
       <Card className="w-full max-w-md shadow-strong border-2">
-        <CardHeader className="space-y-4">
+        <CardHeader className="space-y-2 pb-2">
           <div className="flex justify-center">
-            <img src={logo} alt="Bakan Logo" className="h-16" />
+            <img src={logo} alt="Bakan Logo" className="h-12" />
           </div>
-          <CardTitle className="text-2xl text-center">
+          <CardTitle className="text-xl text-center">
             {invitationCode ? 'Únete a la Transacción' : 'Bienvenido a Bakan'}
           </CardTitle>
-          <CardDescription className="text-center">
+          <CardDescription className="text-center text-xs">
             {invitationCode
               ? 'Inicia sesión o regístrate para unirte a la transacción'
               : 'La plataforma más segura para tus transacciones'}
@@ -294,25 +294,25 @@ const Auth = () => {
             </TabsContent>
 
             <TabsContent value="signup">
-              <form onSubmit={handleSignUp} className="space-y-4 mt-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signup-name">Nombre completo</Label>
+              <form onSubmit={handleSignUp} className="space-y-3 mt-4">
+                <div className="space-y-1">
+                  <Label htmlFor="signup-name" className="text-xs">Nombre completo</Label>
                   <div className="relative">
-                    <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="signup-name"
                       name="nombreCompleto"
                       type="text"
                       placeholder="Juan Pérez"
-                      className="pl-10"
+                      className="pl-10 h-9"
                       required
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-telefono">Número de celular</Label>
+                <div className="space-y-1">
+                  <Label htmlFor="signup-telefono" className="text-xs">Número de celular</Label>
                   <div className="relative">
-                    <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="signup-telefono"
                       name="telefono"
@@ -320,7 +320,7 @@ const Auth = () => {
                       inputMode="numeric"
                       pattern="[0-9]*"
                       placeholder="912345678"
-                      className="pl-10"
+                      className="pl-10 h-9"
                       required
                       onInput={(e) => {
                         e.currentTarget.value = e.currentTarget.value.replace(/[^0-9]/g, '');
@@ -328,49 +328,49 @@ const Auth = () => {
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">Correo electrónico</Label>
+                <div className="space-y-1">
+                  <Label htmlFor="signup-email" className="text-xs">Correo electrónico</Label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="signup-email"
                       name="email"
                       type="email"
                       placeholder="tu@correo.com"
-                      className="pl-10"
+                      className="pl-10 h-9"
                       required
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password">Contraseña</Label>
+                <div className="space-y-1">
+                  <Label htmlFor="signup-password" className="text-xs">Contraseña</Label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="signup-password"
                       name="password"
                       type="password"
                       placeholder="••••••••"
-                      className="pl-10"
+                      className="pl-10 h-9"
                       required
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-confirm-password">Confirmar contraseña</Label>
+                <div className="space-y-1">
+                  <Label htmlFor="signup-confirm-password" className="text-xs">Confirmar contraseña</Label>
                   <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Lock className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                       id="signup-confirm-password"
                       name="confirmPassword"
                       type="password"
                       placeholder="••••••••"
-                      className="pl-10"
+                      className="pl-10 h-9"
                       required
                     />
                   </div>
                 </div>
-                <Button type="submit" className="w-full shadow-soft" disabled={loading}>
+                <Button type="submit" className="w-full shadow-soft h-10" disabled={loading}>
                   {loading ? 'Registrando...' : 'Crear Cuenta'}
                 </Button>
               </form>
