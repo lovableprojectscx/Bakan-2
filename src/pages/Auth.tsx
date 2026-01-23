@@ -13,7 +13,7 @@ import logo from '@/assets/logo.png';
 import { supabase } from '@/integrations/supabase/client';
 
 const signUpSchema = z.object({
-  nombreCompleto: z.string().trim().min(2, 'El nombre debe tener al menos 2 caracteres').max(100, 'El nombre es muy largo'),
+  nombreCompleto: z.string().trim().min(2, 'El nombre debe tener al menos 2 caracteres').max(100, 'El nombre es muy largo').regex(/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/, 'El nombre no puede contener números ni caracteres especiales'),
   telefono: z.string().trim().min(9, 'El teléfono debe tener al menos 9 dígitos').max(15, 'El teléfono es muy largo').regex(/^[0-9+\s-]+$/, 'El teléfono solo puede contener números, +, espacios y guiones'),
   email: z.string().trim().email('Correo electrónico inválido').max(255, 'El correo es muy largo'),
   password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres').max(72, 'La contraseña es muy larga'),
@@ -100,7 +100,7 @@ const Auth = () => {
     try {
       const validated = signUpSchema.parse(data);
       const { error } = await signUp(validated.email, validated.password, validated.nombreCompleto, validated.telefono);
-      
+
       if (error) {
         if (error.message.includes('already registered')) {
           toast.error('Este correo ya está registrado. Intenta iniciar sesión.');
@@ -131,7 +131,7 @@ const Auth = () => {
     try {
       const validated = signInSchema.parse(data);
       const { error } = await signIn(validated.email, validated.password);
-      
+
       if (error) {
         if (error.message.includes('Invalid login credentials')) {
           toast.error('Correo o contraseña incorrectos');
@@ -161,7 +161,7 @@ const Auth = () => {
     try {
       const validated = resetPasswordSchema.parse(data);
       const { error } = await resetPassword(validated.email);
-      
+
       if (error) {
         toast.error(error.message || 'Error al enviar el correo de recuperación');
       } else {
@@ -237,8 +237,8 @@ const Auth = () => {
             {invitationCode ? 'Únete a la Transacción' : 'Bienvenido a Bakan'}
           </CardTitle>
           <CardDescription className="text-center">
-            {invitationCode 
-              ? 'Inicia sesión o regístrate para unirte a la transacción' 
+            {invitationCode
+              ? 'Inicia sesión o regístrate para unirte a la transacción'
               : 'La plataforma más segura para tus transacciones'}
           </CardDescription>
         </CardHeader>
@@ -317,9 +317,14 @@ const Auth = () => {
                       id="signup-telefono"
                       name="telefono"
                       type="tel"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       placeholder="912345678"
                       className="pl-10"
                       required
+                      onInput={(e) => {
+                        e.currentTarget.value = e.currentTarget.value.replace(/[^0-9]/g, '');
+                      }}
                     />
                   </div>
                 </div>
