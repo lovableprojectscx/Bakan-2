@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Copy, Check, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { APP_CONFIG } from '@/config';
 
 interface TransactionCodeShareProps {
   codigo: string;
@@ -14,7 +15,9 @@ export const TransactionCodeShare = ({ codigo }: TransactionCodeShareProps) => {
   const [copied, setCopied] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
 
-  const shareableLink = `${window.location.origin}/auth?code=${codigo}`;
+
+
+  const shareableLink = `${APP_CONFIG.getShareUrl()}/auth?code=${codigo}`;
 
   const copyCode = async () => {
     try {
@@ -53,14 +56,14 @@ export const TransactionCodeShare = ({ codigo }: TransactionCodeShareProps) => {
         <div className="space-y-2">
           <Label>Código de Invitación</Label>
           <div className="flex gap-2">
-            <Input 
-              value={codigo} 
-              readOnly 
+            <Input
+              value={codigo}
+              readOnly
               className="font-mono text-lg font-semibold"
             />
-            <Button 
-              variant="secondary" 
-              size="icon" 
+            <Button
+              variant="secondary"
+              size="icon"
               onClick={copyCode}
               className="shrink-0"
             >
@@ -72,14 +75,14 @@ export const TransactionCodeShare = ({ codigo }: TransactionCodeShareProps) => {
         <div className="space-y-2">
           <Label>Link para Compartir</Label>
           <div className="flex gap-2">
-            <Input 
-              value={shareableLink} 
-              readOnly 
+            <Input
+              value={shareableLink}
+              readOnly
               className="text-sm"
             />
-            <Button 
-              variant="secondary" 
-              size="icon" 
+            <Button
+              variant="secondary"
+              size="icon"
               onClick={copyLink}
               className="shrink-0"
             >

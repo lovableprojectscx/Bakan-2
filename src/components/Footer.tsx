@@ -27,7 +27,7 @@ export const Footer = () => {
           </div>
 
           <p className="text-sm text-muted">
-            © 2024 Bakan. Todos los derechos reservados.
+            © {new Date().getFullYear()} Bakan. Todos los derechos reservados.
           </p>
         </div>
       </div>
