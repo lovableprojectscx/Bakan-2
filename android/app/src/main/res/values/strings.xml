@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Bakan</string>
+    <string name="title_activity_main">Bakan</string>
+    <string name="package_name">com.bakan.app</string>
+    <string name="custom_url_scheme">com.bakan.app</string>
+</resources>
