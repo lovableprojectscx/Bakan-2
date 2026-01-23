@@ -1,5 +1,7 @@
 # Bakan
 
+**Project URL**: https://lovable.dev/projects/5ab34199-4272-494c-adf7-a9f7c405a5a7
+
 Bakan es una plataforma de intermediación financiera segura ("Escrow") diseñada para facilitar transacciones de compra-venta entre particulares, garantizando que el vendedor reciba su pago y el comprador su producto.
 
 ## Tecnologías
