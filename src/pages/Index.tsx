@@ -8,6 +8,7 @@ import { Footer } from "@/components/Footer";
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Capacitor } from "@capacitor/core";
 
 const Index = () => {
   const navigate = useNavigate();
