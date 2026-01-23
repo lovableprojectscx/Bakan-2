@@ -122,17 +122,23 @@
     @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent;
   }
 
-  /* Animations */
-  .animate-float-slow {
-    animation: float 6s ease-in-out infinite;
-  }
+  /* Animations - Optimized for Mobile */
+  @media (min-width: 768px) {
+    .animate-float-slow {
+      animation: float 6s ease-in-out infinite;
+    }
 
-  .animate-float-medium {
-    animation: float 4s ease-in-out infinite;
-  }
+    .animate-float-medium {
+      animation: float 4s ease-in-out infinite;
+    }
 
-  .animate-pulse-glow {
-    animation: pulseGlow 3s ease-in-out infinite;
+    .animate-pulse-glow {
+      animation: pulseGlow 3s ease-in-out infinite;
+    }
+
+    .animate-tilt-slow {
+      animation: tilt 6s ease-in-out infinite;
+    }
   }
 
   @keyframes float {
@@ -157,10 +163,6 @@
     50% {
       box-shadow: 0 0 40px rgba(59, 130, 246, 0.5);
     }
-  }
-
-  .animate-tilt-slow {
-    animation: tilt 6s ease-in-out infinite;
   }
 
   @keyframes tilt {

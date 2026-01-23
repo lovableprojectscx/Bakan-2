@@ -31,8 +31,9 @@ export const Features = () => {
   return (
     <section className="py-24 bg-background relative overflow-hidden">
       {/* Decorative Circles */}
-      <div className="absolute top-20 left-10 w-96 h-96 bg-primary/5 rounded-full blur-[100px]" />
-      <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent/5 rounded-full blur-[100px]" />
+      {/* Decorative Circles - Reduced blur on mobile */}
+      <div className="absolute top-20 left-10 w-96 h-96 bg-primary/5 rounded-full blur-[60px] md:blur-[100px] pointer-events-none" />
+      <div className="absolute bottom-20 right-10 w-96 h-96 bg-accent/5 rounded-full blur-[60px] md:blur-[100px] pointer-events-none" />
 
       <div className="container px-4 md:px-6 relative z-10">
         <div className="text-center max-w-2xl mx-auto mb-20 animate-fade-in">

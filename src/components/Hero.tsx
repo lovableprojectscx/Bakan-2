@@ -8,7 +8,7 @@ export const Hero = () => {
   return (
     <section className="relative min-h-[90vh] flex items-center overflow-hidden bg-gradient-surface pt-20">
       {/* Background Decor */}
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] -z-10 animate-pulse-glow" />
+      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[80px] -z-10 md:animate-pulse-glow pointer-events-none" />
       <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-accent/5 rounded-full blur-[100px] -z-10" />
 
       <div className="container px-4 md:px-6 relative z-10">
@@ -17,9 +17,9 @@ export const Hero = () => {
           {/* Left Content */}
           <div className="flex flex-col gap-6 text-center lg:text-left items-center lg:items-start animate-slide-up mx-auto lg:mx-0 max-w-2xl lg:max-w-none">
 
-            {/* Mobile-only Decorative Logo */}
-            <div className="lg:hidden relative w-32 h-32 mb-4 flex items-center justify-center animate-tilt-slow">
-              <div className="absolute inset-0 bg-primary/20 rounded-full blur-2xl animate-pulse-glow" />
+            {/* Mobile-only Decorative Logo - Static for performance */}
+            <div className="lg:hidden relative w-32 h-32 mb-4 flex items-center justify-center">
+              <div className="absolute inset-0 bg-primary/20 rounded-full blur-2xl" />
               <img
                 src={bakanLogo}
                 alt="Bakan Logo"
