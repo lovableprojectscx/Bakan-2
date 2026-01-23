@@ -16,17 +16,24 @@ const Index = () => {
 
   useEffect(() => {
     // Redirect mobile users directly to auth/login
-    const checkMobile = () => {
-      if (window.innerWidth < 768) {
+    const checkPlatform = () => {
+      // 1. Is this the Native App (APK)?
+      const isNativeApp = Capacitor.isNativePlatform();
+
+      // 2. Are we on a known Web Domain? (Safety net)
+      const isWebDomain = window.location.hostname.includes('vercel.app') ||
+        window.location.hostname.includes('lovable');
+
+      // Only redirect if it IS the Native App AND NOT a Web Domain
+      if (isNativeApp && !isWebDomain) {
         navigate('/auth');
       } else {
         setIsCheckingMobile(false);
       }
     };
 
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    checkPlatform();
+    // No resize listener needed for this logic
   }, [navigate]);
 
   if (isCheckingMobile) return <div className="min-h-screen bg-background" />; // Show empty while checking
