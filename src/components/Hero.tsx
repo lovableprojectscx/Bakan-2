@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { ArrowRight, CheckCircle2, ShieldCheck } from "lucide-react";
-import bakanLogo from "@/assets/bakan-logo-full.png";
+import bakanIcon from "@/assets/bakan-icon.png";
 
 
 export const Hero = () => {
@@ -18,11 +18,11 @@ export const Hero = () => {
           <div className="flex flex-col gap-6 text-center lg:text-left items-center lg:items-start animate-slide-up mx-auto lg:mx-0 max-w-2xl lg:max-w-none">
 
             {/* Mobile-only Decorative Logo - Static for performance */}
-            <div className="lg:hidden relative w-32 h-32 mb-4 flex items-center justify-center">
+            <div className="lg:hidden relative w-64 h-64 mb-4 flex items-center justify-center">
               <div className="absolute inset-0 bg-primary/20 rounded-full blur-2xl" />
               <img
-                src={bakanLogo}
-                alt="Bakan Logo"
+                src={bakanIcon}
+                alt="Bakan Icon"
                 className="relative z-10 w-full h-full object-contain drop-shadow-xl"
               />
             </div>
@@ -38,7 +38,7 @@ export const Hero = () => {
             </h1>
 
             <p className="text-base text-muted-foreground md:text-xl max-w-[500px] leading-relaxed text-balance">
-              La confianza que cierra el trato. Seguridad para el comprador, garantía para el vendedor.
+              Retenemos el pago de forma segura hasta que confirmes que recibiste tu producto.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 mt-4 w-full sm:w-auto">
@@ -73,11 +73,11 @@ export const Hero = () => {
             <div className="relative w-full max-w-[200px] sm:max-w-[400px] lg:max-w-[500px] aspect-square flex items-center justify-center">
 
               {/* Main Logo Container */}
-              <div className="relative z-10 w-32 h-32 sm:w-64 sm:h-64 lg:w-96 lg:h-96 flex items-center justify-center animate-tilt-slow transform hover:scale-105 transition-transform duration-500">
+              <div className="relative z-10 w-64 h-64 sm:w-96 sm:h-96 lg:w-[600px] lg:h-[600px] flex items-center justify-center animate-tilt-slow transform hover:scale-105 transition-transform duration-500">
                 <div className="absolute inset-0 bg-primary/20 rounded-full blur-[60px] animate-pulse-glow" />
                 <img
-                  src={bakanLogo}
-                  alt="Bakan Logo"
+                  src={bakanIcon}
+                  alt="Bakan Icon"
                   className="relative z-10 w-full h-full object-contain drop-shadow-2xl"
                 />
               </div>
@@ -91,8 +91,8 @@ export const Hero = () => {
                   <CheckCircle2 className="w-6 h-6 text-success" />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Estado</p>
-                  <p className="font-bold text-lg text-foreground">100% Seguro</p>
+                  <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Dinero</p>
+                  <p className="font-bold text-lg text-foreground">Resguardado</p>
                 </div>
               </div>
 
@@ -103,7 +103,7 @@ export const Hero = () => {
                 </div>
                 <div>
                   <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Protección</p>
-                  <p className="font-bold text-lg text-foreground">Activa</p>
+                  <p className="font-bold text-lg text-foreground">Garantizada</p>
                 </div>
               </div>
 

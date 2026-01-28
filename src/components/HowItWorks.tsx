@@ -3,18 +3,18 @@ import { ShoppingCart, Shield, CheckCircle2 } from "lucide-react";
 const steps = [
   {
     icon: ShoppingCart,
-    title: "Haces tu compra",
-    description: "Encuentras lo que buscas en redes sociales y pagas a través de Bakan.",
+    title: "Inicia con Seguridad",
+    description: "Crea tu transacción en segundos. Se acabó el riesgo de transferir directamente a desconocidos.",
   },
   {
     icon: Shield,
-    title: "Guardamos tu dinero",
-    description: "Retenemos el pago de forma segura mientras el vendedor envía tu producto.",
+    title: "Bakan Protege tu Dinero",
+    description: "Retenemos el pago de forma segura. Somos el muro entre tu dinero y cualquier intento de estafa.",
   },
   {
     icon: CheckCircle2,
-    title: "Confirmas y listo",
-    description: "Recibes tu producto, lo verificas y liberamos el pago al vendedor.",
+    title: "Tranquilidad Garantizada",
+    description: "Solo cuando confirmas que recibiste lo acordado, liberamos el pago al vendedor. Así de simple.",
   },
 ];
 

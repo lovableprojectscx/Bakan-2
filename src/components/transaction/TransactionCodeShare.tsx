@@ -1,21 +1,19 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Copy, Check, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { APP_CONFIG } from '@/config';
 
 interface TransactionCodeShareProps {
   codigo: string;
+  monto: number;
+  titulo: string;
 }
 
-export const TransactionCodeShare = ({ codigo }: TransactionCodeShareProps) => {
+export const TransactionCodeShare = ({ codigo, monto, titulo }: TransactionCodeShareProps) => {
   const [copied, setCopied] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
-
-
 
   const shareableLink = `${APP_CONFIG.getShareUrl()}/auth?code=${codigo}`;
 
@@ -41,58 +39,59 @@ export const TransactionCodeShare = ({ codigo }: TransactionCodeShareProps) => {
     }
   };
 
+  const handleNativeShare = async () => {
+    const shareData = {
+      title: 'Únete a la transacción en Bakan',
+      text: `Hola, únete a la transacción por "${titulo}" (S/ ${monto.toFixed(2)}). Usa el código: ${codigo}`,
+      url: shareableLink,
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+        toast.success('Compartido correctamente');
+      } catch (err) {
+        // User cancelled, ignore
+      }
+    } else {
+      // Fallback for desktop
+      copyLink();
+    }
+  };
+
   return (
-    <Card className="shadow-soft">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Share2 className="w-5 h-5" />
-          Compartir Transacción
+    <Card className="shadow-sm border-dashed">
+      <CardHeader className="pb-3 pt-4 px-4">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Share2 className="w-4 h-4 text-primary" />
+          Código de Invitación
         </CardTitle>
-        <CardDescription>
-          Comparte este código o link con la otra parte para que se una a la transacción
-        </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label>Código de Invitación</Label>
-          <div className="flex gap-2">
-            <Input
-              value={codigo}
-              readOnly
-              className="font-mono text-lg font-semibold"
-            />
-            <Button
-              variant="secondary"
-              size="icon"
-              onClick={copyCode}
-              className="shrink-0"
-            >
-              {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-            </Button>
-          </div>
+      <CardContent className="px-4 pb-4 space-y-3">
+        {/* Compact Layout: Code + Copy Button inline */}
+        <div className="flex items-center gap-2 p-1.5 pl-3 bg-muted/50 rounded-lg border border-border/50">
+          <span className="font-mono text-sm font-bold tracking-widest text-foreground flex-1 truncate">
+            {codigo}
+          </span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={copyCode}
+            className="h-8 w-8 p-0 hover:bg-background shadow-sm"
+          >
+            {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4 text-muted-foreground" />}
+          </Button>
         </div>
 
-        <div className="space-y-2">
-          <Label>Link para Compartir</Label>
-          <div className="flex gap-2">
-            <Input
-              value={shareableLink}
-              readOnly
-              className="text-sm"
-            />
-            <Button
-              variant="secondary"
-              size="icon"
-              onClick={copyLink}
-              className="shrink-0"
-            >
-              {linkCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-            </Button>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Este link llevará al usuario a autenticarse (si no lo está) y luego unirse automáticamente a la transacción
-          </p>
-        </div>
+        {/* Primary Action: Native Share */}
+        <Button
+          className="w-full gap-2 font-medium"
+          variant="outline"
+          onClick={handleNativeShare}
+        >
+          <Share2 className="w-4 h-4" />
+          Compartir Link de Invitación
+        </Button>
       </CardContent>
     </Card>
   );

@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,9 +19,9 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { 
-  CheckCircle, 
-  AlertCircle, 
+import {
+  CheckCircle,
+  AlertCircle,
   Truck,
   Clock,
   PartyPopper,
@@ -27,7 +29,6 @@ import {
   Upload,
   CreditCard
 } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
 import { TransactionProgressSimple } from './TransactionProgressSimple';
 import { ShippingProofForm } from './ShippingProofForm';
 import { ShippingProofsGallery } from './ShippingProofsGallery';
@@ -35,14 +36,23 @@ import { cn } from '@/lib/utils';
 
 interface Transaccion {
   id: string;
-  estado: string;
+  codigo_invitacion: string;
+  vendedor_id: string;
+  comprador_id: string | null;
+  solicitud_cancelacion_por?: string | null;
+  titulo_producto: string;
+  descripcion: string | null;
   precio_producto: number;
   comision_bakan: number;
   monto_a_liberar: number;
   tipo_producto: string;
-  fecha_pago?: string | null;
-  estado_pago_vendedor?: string | null;
-  voucher_pago_vendedor_url?: string | null;
+  estado: string;
+  fecha_creacion: string;
+  fecha_pago: string | null;
+  fecha_envio: string | null;
+  fecha_liberacion: string | null;
+  estado_pago_vendedor: string | null;
+  voucher_pago_vendedor_url: string | null;
 }
 
 interface TransactionWizardPanelProps {
@@ -52,18 +62,20 @@ interface TransactionWizardPanelProps {
   onTransactionUpdate: () => void;
 }
 
-export const TransactionWizardPanel = ({ 
-  transaccion, 
-  esVendedor, 
+export const TransactionWizardPanel = ({
+  transaccion,
+  esVendedor,
   esComprador,
-  onTransactionUpdate 
+  onTransactionUpdate
 }: TransactionWizardPanelProps) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [cuentasBakan, setCuentasBakan] = useState<CuentaBancaria[]>([]);
   const [mostrarCuentas, setMostrarCuentas] = useState(false);
   const [archivoVoucher, setArchivoVoucher] = useState<File | null>(null);
   const [subiendoVoucher, setSubiendoVoucher] = useState(false);
   const [tiempoRestante, setTiempoRestante] = useState<number | null>(null);
+  const [procesandoCancelacion, setProcesandoCancelacion] = useState(false);
 
   // Note: Verification time is NOT a hard limit - it's informational only
   // The admin verifies manually, so time shown is an estimate for user expectation
@@ -110,11 +122,11 @@ export const TransactionWizardPanel = ({
       toast.error('Debes seleccionar un voucher antes de enviar');
       return;
     }
-    
+
     const file = archivoVoucher;
 
-    if (file.size > 5242880) {
-      toast.error('El archivo es muy grande. Máximo 5MB');
+    if (file.size > 52428800) {
+      toast.error('El archivo es muy grande. Máximo 50MB');
       return;
     }
 
@@ -122,7 +134,7 @@ export const TransactionWizardPanel = ({
     try {
       const fileExt = file.name.split('.').pop();
       const fileName = `${user?.id}/${transaccion.id}/voucher-${Date.now()}.${fileExt}`;
-      
+
       const { error: uploadError } = await supabase.storage
         .from('vouchers')
         .upload(fileName, file);
@@ -147,10 +159,10 @@ export const TransactionWizardPanel = ({
 
       const { error: updateError } = await supabase
         .from('transacciones')
-        .update({ 
+        .update({
           estado: 'pago_en_verificacion',
           fecha_pago: new Date().toISOString()
-        })
+        } as any)
         .eq('id', transaccion.id);
 
       if (updateError) throw updateError;
@@ -158,7 +170,7 @@ export const TransactionWizardPanel = ({
       // Enviar notificación al admin por email
       try {
         await supabase.functions.invoke('notify-admin-payment', {
-          body: { 
+          body: {
             transaccionId: transaccion.id,
             monto: transaccion.precio_producto
           }
@@ -187,10 +199,10 @@ export const TransactionWizardPanel = ({
     try {
       const { error } = await supabase
         .from('transacciones')
-        .update({ 
+        .update({
           estado: 'enviado',
           fecha_envio: new Date().toISOString()
-        })
+        } as any)
         .eq('id', transaccion.id)
         .eq('vendedor_id', user?.id); // Additional server-side check
 
@@ -220,10 +232,10 @@ export const TransactionWizardPanel = ({
     try {
       const { error } = await supabase
         .from('transacciones')
-        .update({ 
+        .update({
           estado: 'completada',
           fecha_liberacion: new Date().toISOString()
-        })
+        } as any)
         .eq('id', transaccion.id)
         .eq('comprador_id', user?.id); // Additional server-side check
 
@@ -236,28 +248,109 @@ export const TransactionWizardPanel = ({
     }
   };
 
+  const eliminarTransaccion = async () => {
+    try {
+      const { error } = await supabase
+        .from('transacciones')
+        .delete()
+        .eq('id', transaccion.id);
+
+      if (error) throw error;
+
+      toast.success('Transacción eliminada correctamente');
+      navigate('/dashboard');
+    } catch (error: any) {
+      toast.error('Error al eliminar: ' + error.message);
+    }
+  };
+
+  const solicitarCancelacion = async () => {
+    setProcesandoCancelacion(true);
+    try {
+      const { error } = await supabase
+        .from('transacciones')
+        .update({ solicitud_cancelacion_por: user?.id } as any)
+        .eq('id', transaccion.id);
+
+      if (error) throw error;
+      toast.success('Solicitud de cancelación enviada');
+      onTransactionUpdate();
+    } catch (error: any) {
+      toast.error('Error: ' + error.message);
+    } finally {
+      setProcesandoCancelacion(false);
+    }
+  };
+
+  const responderCancelacion = async (aceptar: boolean) => {
+    setProcesandoCancelacion(true);
+    try {
+      if (aceptar) {
+        const { error } = await supabase
+          .from('transacciones')
+          .update({
+            estado: 'cancelada',
+            solicitud_cancelacion_por: null
+          } as any)
+          .eq('id', transaccion.id);
+        if (error) throw error;
+        toast.success('Transacción cancelada');
+      } else {
+        const { error } = await supabase
+          .from('transacciones')
+          .update({ solicitud_cancelacion_por: null } as any)
+          .eq('id', transaccion.id);
+        if (error) throw error;
+        toast.success('Cancelación rechazada');
+      }
+      onTransactionUpdate();
+    } catch (error: any) {
+      toast.error('Error: ' + error.message);
+    } finally {
+      setProcesandoCancelacion(false);
+    }
+  };
+
+  const cancelarSolicitudPropia = async () => {
+    setProcesandoCancelacion(true);
+    try {
+      const { error } = await supabase
+        .from('transacciones')
+        .update({ solicitud_cancelacion_por: null } as any)
+        .eq('id', transaccion.id);
+
+      if (error) throw error;
+      toast.success('Solicitud de cancelación retirada');
+      onTransactionUpdate();
+    } catch (error: any) {
+      toast.error('Error: ' + error.message);
+    } finally {
+      setProcesandoCancelacion(false);
+    }
+  };
+
   const renderWizardStep = () => {
     switch (transaccion.estado) {
       case 'iniciada':
         return (
-          <div className="space-y-4">
-            <div className="text-center py-6">
-              <div className="w-20 h-20 mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                <Clock className="w-10 h-10 text-primary animate-pulse" />
+          <div className="space-y-3">
+            <div className="text-center py-2">
+              <div className="w-12 h-12 mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-2 shadow-[0_0_15px_rgba(59,130,246,0.1)] ring-4 ring-primary/5">
+                <Clock className="w-6 h-6 text-primary animate-pulse" />
               </div>
-              <h3 className="text-xl font-bold mb-2">
+              <h3 className="text-lg font-bold mb-1">
                 {esVendedor ? 'Esperando al comprador' : 'Esperando al vendedor'}
               </h3>
-              <p className="text-muted-foreground max-w-sm mx-auto">
+              <p className="text-xs text-muted-foreground max-w-[280px] mx-auto leading-relaxed">
                 Comparte el código de invitación para que la otra persona se una a esta transacción.
               </p>
             </div>
-            
-            <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4">
-              <div className="flex gap-3">
-                <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                <div className="text-sm text-amber-700 dark:text-amber-400">
-                  <p className="font-semibold mb-1">Consejo de seguridad</p>
+
+            <div className="bg-amber-50 dark:bg-amber-950/10 border border-amber-200/50 dark:border-amber-800/50 rounded-xl p-3">
+              <div className="flex gap-2.5 text-center sm:text-left flex-col sm:flex-row items-center sm:items-start text-amber-700 dark:text-amber-400">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                <div className="text-[13px] leading-tight">
+                  <p className="font-bold mb-0.5">Consejo de seguridad</p>
                   <p>No compartas datos personales hasta que ambas partes estén conectadas.</p>
                 </div>
               </div>
@@ -269,11 +362,11 @@ export const TransactionWizardPanel = ({
         if (esComprador) {
           return (
             <div className="space-y-4">
-              <div className="text-center py-4">
-                <div className="w-16 h-16 mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-3">
-                  <CreditCard className="w-8 h-8 text-primary" />
+              <div className="text-center py-2">
+                <div className="w-12 h-12 mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-2 shadow-[0_0_15px_rgba(59,130,246,0.1)] ring-4 ring-primary/5">
+                  <CreditCard className="w-6 h-6 text-primary" />
                 </div>
-                <h3 className="text-xl font-bold mb-2">Realiza el pago</h3>
+                <h3 className="text-lg font-bold mb-1">Realiza el pago</h3>
                 <p className="text-muted-foreground">
                   Transfiere a una de nuestras cuentas y sube el comprobante
                 </p>
@@ -313,7 +406,7 @@ export const TransactionWizardPanel = ({
                       </CardContent>
                     </Card>
                   ))}
-                  
+
                   <div className="pt-4 space-y-3 border-t">
                     <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-xl p-4">
                       <div className="flex gap-3">
@@ -321,6 +414,16 @@ export const TransactionWizardPanel = ({
                         <div className="text-sm text-amber-700 dark:text-amber-400">
                           <p className="font-semibold mb-1">Monto a pagar:</p>
                           <p className="text-xl font-bold">S/ {transaccion.precio_producto.toFixed(2)}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-blue-50 dark:bg-blue-950/10 border border-blue-200/50 dark:border-blue-800/50 rounded-xl p-3">
+                      <div className="flex gap-2.5">
+                        <ShieldCheck className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                        <div className="text-[13px] leading-tight text-blue-700 dark:text-blue-400">
+                          <p className="font-bold mb-0.5">💡 Consejo para futuras disputas:</p>
+                          <p>Guarda siempre una captura de pantalla de tu transferencia bancaria. Te servirá de respaldo.</p>
                         </div>
                       </div>
                     </div>
@@ -338,7 +441,7 @@ export const TransactionWizardPanel = ({
                     {archivoVoucher && (
                       <p className="text-sm text-success">✓ Archivo seleccionado: {archivoVoucher.name}</p>
                     )}
-                    <Button 
+                    <Button
                       onClick={subirVoucher}
                       disabled={!archivoVoucher || subiendoVoucher}
                       className="w-full h-12"
@@ -355,24 +458,24 @@ export const TransactionWizardPanel = ({
         } else {
           return (
             <div className="space-y-4">
-              <div className="text-center py-6">
-                <div className="w-20 h-20 mx-auto bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mb-4">
-                  <Clock className="w-10 h-10 text-amber-600" />
+              <div className="text-center py-2">
+                <div className="w-12 h-12 mx-auto bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mb-2 shadow-[0_0_15px_rgba(245,158,11,0.1)] ring-4 ring-amber-500/10">
+                  <Clock className="w-6 h-6 text-amber-600" />
                 </div>
-                <h3 className="text-xl font-bold mb-2">Esperando el pago</h3>
+                <h3 className="text-lg font-bold mb-1">Esperando el pago</h3>
                 <p className="text-muted-foreground max-w-sm mx-auto">
                   El comprador está realizando el pago. Te notificaremos cuando esté confirmado.
                 </p>
               </div>
-              
-              <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
-                <div className="flex gap-3">
-                  <ShieldCheck className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                  <div className="text-sm text-blue-700 dark:text-blue-400">
-                    <p className="font-semibold mb-1">Mientras esperas</p>
-                    <ul className="space-y-1 list-disc list-inside">
-                      <li>Prepara el producto para envío</li>
-                      <li>No envíes nada hasta confirmar el pago</li>
+
+              <div className="bg-blue-50 dark:bg-blue-950/10 border border-blue-200/50 dark:border-blue-800/50 rounded-xl p-3">
+                <div className="flex gap-2.5">
+                  <ShieldCheck className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                  <div className="text-[13px] leading-tight text-blue-700 dark:text-blue-400">
+                    <p className="font-bold mb-0.5">Mientras esperas</p>
+                    <ul className="space-y-0.5">
+                      <li>• Prepara el producto para envío</li>
+                      <li>• No envíes nada hasta confirmar el pago</li>
                     </ul>
                   </div>
                 </div>
@@ -390,11 +493,11 @@ export const TransactionWizardPanel = ({
 
         return (
           <div className="space-y-4">
-            <div className="text-center py-4">
-              <div className="w-20 h-20 mx-auto bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mb-4 relative">
-                <Loader2 className="w-10 h-10 text-amber-600 animate-spin" />
+            <div className="text-center py-2">
+              <div className="w-12 h-12 mx-auto bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center mb-2 relative shadow-[0_0_15px_rgba(245,158,11,0.1)] ring-4 ring-amber-500/10">
+                <Loader2 className="w-6 h-6 text-amber-600 animate-spin" />
               </div>
-              <h3 className="text-xl font-bold mb-2">Esperando confirmación</h3>
+              <h3 className="text-lg font-bold mb-1">Esperando confirmación</h3>
               <p className="text-muted-foreground max-w-sm mx-auto">
                 Tu voucher ha sido enviado y está siendo verificado por nuestro equipo.
               </p>
@@ -436,20 +539,20 @@ export const TransactionWizardPanel = ({
         if (esVendedor) {
           return (
             <div className="space-y-4">
-              <div className="text-center py-4">
-                <div className="w-16 h-16 mx-auto bg-success/10 rounded-full flex items-center justify-center mb-3">
-                  <CheckCircle className="w-8 h-8 text-success" />
+              <div className="text-center py-2">
+                <div className="w-12 h-12 mx-auto bg-success/10 rounded-full flex items-center justify-center mb-2 shadow-[0_0_15px_rgba(34,197,94,0.1)] ring-4 ring-success/5">
+                  <CheckCircle className="w-6 h-6 text-success" />
                 </div>
-                <h3 className="text-xl font-bold mb-2">¡Pago confirmado!</h3>
+                <h3 className="text-lg font-bold mb-1">¡Pago confirmado!</h3>
                 <p className="text-muted-foreground text-sm">
                   Ahora envía el producto y sube las pruebas de envío.
                 </p>
               </div>
 
-              <div className="bg-success/10 border border-success/30 rounded-xl p-3">
+              <div className="bg-success/5 border border-success/20 rounded-xl p-2 px-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">Monto retenido:</span>
-                  <span className="text-lg font-bold text-success">S/ {transaccion.precio_producto.toFixed(2)}</span>
+                  <span className="text-xs text-muted-foreground uppercase font-semibold">Monto retenido:</span>
+                  <span className="text-base font-bold text-success">S/ {transaccion.precio_producto.toFixed(2)}</span>
                 </div>
               </div>
 
@@ -462,6 +565,16 @@ export const TransactionWizardPanel = ({
                 <p className="text-sm text-muted-foreground mb-4">
                   Completa los datos del envío y sube las pruebas necesarias (fotos, videos, comprobantes).
                 </p>
+
+                <div className="bg-amber-50 dark:bg-amber-950/10 border border-amber-200/50 dark:border-amber-800/50 rounded-xl p-3 mb-3">
+                  <div className="flex gap-2.5">
+                    <ShieldCheck className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                    <div className="text-[13px] leading-tight text-amber-700 dark:text-amber-400">
+                      <p className="font-bold mb-0.5">💡 Consejo Vital:</p>
+                      <p>Graba un video empaquetando el producto. Es tu mejor prueba contra reclamos.</p>
+                    </div>
+                  </div>
+                </div>
                 <ShippingProofForm
                   transaccionId={transaccion.id}
                   userId={user?.id || ''}
@@ -473,16 +586,16 @@ export const TransactionWizardPanel = ({
         } else {
           return (
             <div className="space-y-4">
-              <div className="text-center py-6">
-                <div className="w-20 h-20 mx-auto bg-success/10 rounded-full flex items-center justify-center mb-4">
-                  <ShieldCheck className="w-10 h-10 text-success" />
+              <div className="text-center py-2">
+                <div className="w-12 h-12 mx-auto bg-success/10 rounded-full flex items-center justify-center mb-2 shadow-[0_0_15px_rgba(34,197,94,0.1)] ring-4 ring-success/5">
+                  <ShieldCheck className="w-6 h-6 text-success" />
                 </div>
-                <h3 className="text-xl font-bold mb-2">Tu pago está seguro</h3>
+                <h3 className="text-lg font-bold mb-1">Tu pago está seguro</h3>
                 <p className="text-muted-foreground max-w-sm mx-auto">
                   Bakan retiene el dinero hasta que confirmes que recibiste el producto correctamente.
                 </p>
               </div>
-              
+
               <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-xl p-4">
                 <p className="text-sm text-blue-700 dark:text-blue-400 text-center">
                   ⏳ Esperando que el vendedor envíe el producto...
@@ -496,11 +609,11 @@ export const TransactionWizardPanel = ({
         if (esComprador) {
           return (
             <div className="space-y-4">
-              <div className="text-center py-4">
-                <div className="w-20 h-20 mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                  <Truck className="w-10 h-10 text-primary" />
+              <div className="text-center py-2">
+                <div className="w-12 h-12 mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-2 shadow-[0_0_15px_rgba(59,130,246,0.1)] ring-4 ring-primary/5">
+                  <Truck className="w-6 h-6 text-primary" />
                 </div>
-                <h3 className="text-xl font-bold mb-2">
+                <h3 className="text-lg font-bold mb-1">
                   ¡Producto en camino!
                 </h3>
                 <p className="text-muted-foreground max-w-sm mx-auto">
@@ -509,20 +622,22 @@ export const TransactionWizardPanel = ({
               </div>
 
               {/* Shipping Proofs Gallery for Buyer */}
-              <ShippingProofsGallery 
-                transaccionId={transaccion.id} 
+              <ShippingProofsGallery
+                transaccionId={transaccion.id}
                 titulo="Pruebas del Vendedor"
               />
 
-              <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-xl p-4">
-                <div className="flex gap-3">
-                  <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                  <div className="text-sm text-red-700 dark:text-red-400">
-                    <p className="font-semibold mb-1">Antes de confirmar:</p>
-                    <ul className="space-y-1 list-disc list-inside">
-                      <li>Verifica que el producto funciona</li>
-                      <li>Revisa que es lo que acordaste</li>
-                      <li>Una vez confirmes, el pago se libera</li>
+              <div className="bg-red-50 dark:bg-red-950/10 border border-red-200/50 dark:border-red-800/50 rounded-xl p-3">
+                <div className="flex gap-2.5">
+                  <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+                  <div className="text-[13px] leading-tight text-red-700 dark:text-red-400">
+                    <p className="font-bold mb-1">💡 Consejo Vital (Unboxing):</p>
+                    <p className="mb-1.5"><strong>Graba un video abriendo el paquete.</strong> Es tu prueba principal si algo sale mal.</p>
+                    <div className="h-px bg-red-200 dark:bg-red-800 my-1.5" />
+                    <p className="font-bold mb-0.5">Antes de confirmar:</p>
+                    <ul className="space-y-0.5">
+                      <li>• Verifica que el producto funciona</li>
+                      <li>• Revisa que es lo que acordaste</li>
                     </ul>
                   </div>
                 </div>
@@ -557,19 +672,19 @@ export const TransactionWizardPanel = ({
         } else {
           return (
             <div className="space-y-4">
-              <div className="text-center py-6">
-                <div className="w-20 h-20 mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-4">
-                  <Clock className="w-10 h-10 text-primary animate-pulse" />
+              <div className="text-center py-4">
+                <div className="w-16 h-16 mx-auto bg-primary/10 rounded-full flex items-center justify-center mb-3 shadow-[0_0_15px_rgba(59,130,246,0.15)] ring-4 ring-primary/5">
+                  <Clock className="w-8 h-8 text-primary animate-pulse" />
                 </div>
                 <h3 className="text-xl font-bold mb-2">Esperando confirmación</h3>
                 <p className="text-muted-foreground max-w-sm mx-auto">
                   El comprador debe confirmar que recibió el producto. Luego recibirás tu pago.
                 </p>
               </div>
-              
+
               {/* Show uploaded proofs to seller */}
-              <ShippingProofsGallery 
-                transaccionId={transaccion.id} 
+              <ShippingProofsGallery
+                transaccionId={transaccion.id}
                 titulo="Tus Pruebas de Envío"
               />
             </div>
@@ -578,19 +693,19 @@ export const TransactionWizardPanel = ({
 
       case 'completada':
         const isPagado = transaccion.estado_pago_vendedor === 'pagado';
-        
+
         return (
           <div className="space-y-4">
-            <div className="text-center py-6">
-              <div className="w-20 h-20 mx-auto bg-success/20 rounded-full flex items-center justify-center mb-4 animate-bounce">
-                <PartyPopper className="w-10 h-10 text-success" />
+            <div className="text-center py-2">
+              <div className="w-12 h-12 mx-auto bg-success/20 rounded-full flex items-center justify-center mb-2 animate-bounce shadow-[0_0_15px_rgba(34,197,94,0.1)] ring-4 ring-success/10">
+                <PartyPopper className="w-6 h-6 text-success" />
               </div>
-              <h3 className="text-xl font-bold mb-2">🎉 ¡Transacción completada!</h3>
+              <h3 className="text-lg font-bold mb-1">🎉 ¡Transacción completada!</h3>
               <p className="text-muted-foreground max-w-sm mx-auto">
-                {esVendedor 
-                  ? (isPagado 
-                      ? '¡El dinero ya fue transferido a tu cuenta!' 
-                      : 'El dinero será transferido a tu cuenta pronto.')
+                {esVendedor
+                  ? (isPagado
+                    ? '¡El dinero ya fue transferido a tu cuenta!'
+                    : 'El dinero será transferido a tu cuenta pronto.')
                   : '¡Gracias por tu compra! Esperamos que disfrutes tu producto.'}
               </p>
             </div>
@@ -599,8 +714,8 @@ export const TransactionWizardPanel = ({
               <>
                 <div className={cn(
                   "border rounded-xl p-4",
-                  isPagado 
-                    ? "bg-success/10 border-success/30" 
+                  isPagado
+                    ? "bg-success/10 border-success/30"
                     : "bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800"
                 )}>
                   <div className="flex justify-between items-center">
@@ -616,8 +731,8 @@ export const TransactionWizardPanel = ({
                     <span className="text-sm text-muted-foreground">Estado del pago:</span>
                     <span className={cn(
                       "text-sm font-semibold px-3 py-1 rounded-full",
-                      isPagado 
-                        ? "bg-success/20 text-success" 
+                      isPagado
+                        ? "bg-success/20 text-success"
                         : "bg-amber-100 dark:bg-amber-900/30 text-amber-600"
                     )}>
                       {isPagado ? '✓ Pagado' : '⏳ Pendiente de pago'}
@@ -637,7 +752,7 @@ export const TransactionWizardPanel = ({
                         <p className="text-xs text-muted-foreground">Bakan ha transferido tu dinero</p>
                       </div>
                     </div>
-                    
+
                     <div className="bg-background/80 rounded-lg p-3 space-y-3">
                       {transaccion.voucher_pago_vendedor_url.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
                         <div className="relative">
@@ -649,7 +764,7 @@ export const TransactionWizardPanel = ({
                           />
                         </div>
                       ) : null}
-                      
+
                       <Button
                         variant="outline"
                         className="w-full border-success text-success hover:bg-success/10"
@@ -702,37 +817,135 @@ export const TransactionWizardPanel = ({
     <Card className="overflow-hidden">
       {/* Progress header */}
       <div className="bg-muted/30 p-4 border-b">
-        <TransactionProgressSimple 
-          estadoActual={transaccion.estado} 
+        <TransactionProgressSimple
+          estadoActual={transaccion.estado}
         />
       </div>
-      
+
       <CardContent className="p-4 sm:p-6">
         {renderWizardStep()}
-        
-        {/* Price summary - always visible */}
-        <div className="mt-6 pt-4 border-t space-y-2">
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Precio del producto:</span>
-            <span className="font-medium">S/ {transaccion.precio_producto.toFixed(2)}</span>
+
+        {/* Price summary - Receipt Style */}
+        <div className="mt-4 bg-muted/40 rounded-xl p-3 border border-dashed border-muted-foreground/30 relative">
+          <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 bg-background px-2 text-[10px] font-mono text-muted-foreground uppercase tracking-widest border rounded-full">
+            Resumen
           </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-muted-foreground">Comisión de seguridad:</span>
-            <span className="font-medium">S/ {transaccion.comision_bakan.toFixed(2)}</span>
+          <div className="space-y-2 pt-1">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Precio del producto:</span>
+              <span className="font-medium font-mono">S/ {transaccion.precio_producto.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground">Comisión de seguridad:</span>
+              <span className="font-medium font-mono">S/ {transaccion.comision_bakan.toFixed(2)}</span>
+            </div>
+            <div className="h-px bg-muted-foreground/20 my-2" />
+
+            {esComprador && (
+              <div className="flex justify-between items-baseline">
+                <span className="text-sm font-semibold text-muted-foreground">Total a Pagar:</span>
+                <span className="text-xl font-black text-primary tracking-tight">
+                  S/ {(transaccion.precio_producto + transaccion.comision_bakan).toFixed(2)}
+                </span>
+              </div>
+            )}
+
+            {esVendedor && (
+              <div className="flex justify-between items-baseline">
+                <span className="text-sm font-semibold text-muted-foreground">Recibirás:</span>
+                <span className="text-xl font-black text-success tracking-tight">
+                  S/ {transaccion.monto_a_liberar.toFixed(2)}
+                </span>
+              </div>
+            )}
           </div>
-          {esComprador && (
-            <div className="flex justify-between text-sm pt-2 border-t">
-              <span className="text-muted-foreground">Total a pagar:</span>
-              <span className="font-semibold text-primary">S/ {(transaccion.precio_producto + transaccion.comision_bakan).toFixed(2)}</span>
-            </div>
-          )}
-          {esVendedor && (
-            <div className="flex justify-between text-sm pt-2 border-t">
-              <span className="text-muted-foreground">Recibirás:</span>
-              <span className="font-semibold text-success">S/ {transaccion.precio_producto.toFixed(2)}</span>
-            </div>
-          )}
         </div>
+
+        {/* Management Actions - Only for active/pending transactions */}
+        {['iniciada', 'pendiente_pago'].includes(transaccion.estado) && (
+          <div className="mt-6 pt-4 border-t border-dashed border-muted-foreground/20">
+            {(!transaccion.vendedor_id || !transaccion.comprador_id) ? (
+              // Case 1: Single Participant (Abandoned)
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="ghost" size="sm" className="w-full text-destructive hover:text-destructive hover:bg-destructive/10 gap-2 h-9">
+                    <AlertCircle className="w-4 h-4" />
+                    Eliminar Transacción Inactiva
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>¿Eliminar transacción?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Esta transacción no tiene un segundo participante. Se eliminará completamente de tu historial.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cerrar</AlertDialogCancel>
+                    <AlertDialogAction onClick={eliminarTransaccion} className="bg-destructive hover:bg-destructive/90">
+                      Eliminar permanentemente
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            ) : (
+              // Case 2: Two Participants
+              <div className="space-y-3">
+                {!transaccion.solicitud_cancelacion_por ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full text-muted-foreground hover:text-destructive hover:bg-destructive/10 gap-2 h-9"
+                    onClick={solicitarCancelacion}
+                    disabled={procesandoCancelacion}
+                  >
+                    <AlertCircle className="w-4 h-4" />
+                    Solicitar Cancelación Mutua
+                  </Button>
+                ) : transaccion.solicitud_cancelacion_por === user?.id ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <p className="text-xs text-amber-600 font-medium animate-pulse">Esperando que el otro usuario acepte la cancelación...</p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="w-full h-8 text-xs"
+                      onClick={cancelarSolicitudPropia}
+                      disabled={procesandoCancelacion}
+                    >
+                      Retirar Solicitud
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-xl p-3 space-y-3">
+                    <p className="text-xs text-amber-700 dark:text-amber-400 font-bold text-center">
+                      El otro usuario ha solicitado cancelar la transacción.
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        size="sm"
+                        variant="default"
+                        className="h-8 text-xs bg-success hover:bg-success/90"
+                        onClick={() => responderCancelacion(true)}
+                        disabled={procesandoCancelacion}
+                      >
+                        Aceptar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 text-xs border"
+                        onClick={() => responderCancelacion(false)}
+                        disabled={procesandoCancelacion}
+                      >
+                        Rechazar
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

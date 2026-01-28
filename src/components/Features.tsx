@@ -2,25 +2,25 @@ import { ShieldCheck, Smartphone, Handshake } from "lucide-react";
 
 const features = [
   {
-    icon: Smartphone,
-    title: "Pagos Seguros",
-    description: "Tu dinero está protegido hasta que confirmes que recibiste tu producto en perfecto estado.",
+    icon: ShieldCheck,
+    title: "Adiós a las Estafas",
+    description: "Bloqueamos el riesgo de pagar y nunca recibir el producto. Con Bakan, tu dinero nunca llega a manos de extraños sin garantía.",
     color: "from-blue-500 to-cyan-400",
     bg: "bg-blue-50 dark:bg-blue-900/20",
     text: "text-blue-600 dark:text-blue-400"
   },
   {
     icon: Handshake,
-    title: "Confianza Total",
-    description: "Vendedores verificados y compradores protegidos. Generamos un ambiente de confianza mutua.",
+    title: "Ventas Sin Riesgo",
+    description: "Como vendedor, tienes la certeza absoluta de que el pago está asegurado por Bakan antes de que realices el envío.",
     color: "from-indigo-500 to-purple-500",
     bg: "bg-indigo-50 dark:bg-indigo-900/20",
     text: "text-indigo-600 dark:text-indigo-400"
   },
   {
-    icon: ShieldCheck,
-    title: "Protección Garantizada",
-    description: "Si algo sale mal, te devolvemos tu dinero. Tu tranquilidad es nuestra prioridad.",
+    icon: Smartphone,
+    title: "Arbitraje Justo",
+    description: "Si surge un problema, nuestro equipo actúa como mediador imparcial. Tu seguridad no depende de la suerte, sino de evidencias reales.",
     color: "from-emerald-500 to-green-400",
     bg: "bg-emerald-50 dark:bg-emerald-900/20",
     text: "text-emerald-600 dark:text-emerald-400"

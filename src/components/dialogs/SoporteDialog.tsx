@@ -33,7 +33,7 @@ export const SoporteDialog = () => {
                 <AccordionItem value="item-2">
                   <AccordionTrigger>¿Cuánto cobra Bakan?</AccordionTrigger>
                   <AccordionContent>
-                    Para compradores: Pagas el precio del producto + una comisión de seguridad del 4.9% + S/ 1.00 que garantiza la protección de tu compra.
+                    Para compradores: Pagas el precio del producto + una comisión de seguridad del 3% + S/ 1.00 que garantiza la protección de tu compra.
                     <br />
                     Para vendedores: Recibes el precio completo del producto. ¡Sin descuentos ni comisiones!
                   </AccordionContent>

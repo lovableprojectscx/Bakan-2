@@ -57,11 +57,11 @@ export const ShippingProofForm = ({ transaccionId, userId, onSuccess }: Shipping
     const nuevosArchivos: ArchivoSeleccionado[] = [];
     for (let i = 0; i < Math.min(files.length, espacioDisponible); i++) {
       const file = files[i];
-      // Limit file size: 50MB for videos, 10MB for others
-      const maxSize = file.type.startsWith('video/') ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
-      
+      // Standardized limit: 50MB for all types
+      const maxSize = 50 * 1024 * 1024;
+
       if (file.size > maxSize) {
-        toast.error(`${file.name} excede el tamaño máximo permitido`);
+        toast.error(`${file.name} excede los 50MB permitidos`);
         continue;
       }
 
@@ -134,15 +134,15 @@ export const ShippingProofForm = ({ transaccionId, userId, onSuccess }: Shipping
 
       // Build shipping details message
       let mensajeEnvio = '📦 **El vendedor ha enviado el producto**\n\n';
-      
+
       if (empresaEnvio.trim()) {
         mensajeEnvio += `🚚 **Empresa de envío:** ${empresaEnvio}\n`;
       }
-      
+
       if (codigoSeguimiento.trim()) {
         mensajeEnvio += `🔢 **Código de seguimiento:** ${codigoSeguimiento}\n`;
       }
-      
+
       if (detallesEnvio.trim()) {
         mensajeEnvio += `\n📝 **Detalles adicionales:**\n${detallesEnvio}\n`;
       }
@@ -154,7 +154,7 @@ export const ShippingProofForm = ({ transaccionId, userId, onSuccess }: Shipping
       // Update transaction status
       const { error: updateError } = await supabase
         .from('transacciones')
-        .update({ 
+        .update({
           estado: 'enviado',
           fecha_envio: new Date().toISOString()
         })
@@ -237,7 +237,7 @@ export const ShippingProofForm = ({ transaccionId, userId, onSuccess }: Shipping
               Click para subir o arrastra archivos aquí
             </p>
             <p className="text-xs text-muted-foreground/70 mt-1">
-              Imágenes, videos (máx 50MB) o PDFs (máx 10MB) • Máximo {MAX_FILES} archivos
+              Fotos, videos o PDFs (máx 50MB) • Máximo {MAX_FILES} archivos
             </p>
             {archivos.length > 0 && (
               <p className="text-xs text-primary mt-1 font-medium">
@@ -277,7 +277,7 @@ export const ShippingProofForm = ({ transaccionId, userId, onSuccess }: Shipping
       </div>
 
       {/* Submit Button */}
-      <Button 
+      <Button
         onClick={handleSubmit}
         disabled={subiendo}
         className="w-full h-12 text-base"

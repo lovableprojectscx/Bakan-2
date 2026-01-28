@@ -3,15 +3,15 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
-import { Send, Paperclip, Image as ImageIcon, Trash2, Package, Truck, Hash, FileText, Files } from 'lucide-react';
+import { Send, Paperclip, Image as ImageIcon, Trash2, Package, Truck, Hash, FileText, Files, MessageCircle, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 // Componente para renderizar notificaciones de envío de forma bonita
 const ShippingNotification = ({ content }: { content: string }) => {
   // Detectar si es una notificación de envío
-  const isShippingNotification = content.includes('El vendedor ha enviado el producto') || 
-                                  content.includes('vendedor ha enviado');
-  
+  const isShippingNotification = content.includes('El vendedor ha enviado el producto') ||
+    content.includes('vendedor ha enviado');
+
   if (!isShippingNotification) {
     return <p className="text-sm font-medium text-foreground whitespace-pre-wrap">{content}</p>;
   }
@@ -183,13 +183,13 @@ export const TransactionChat = ({ transaccionId, userId, estadoTransaccion }: Tr
         .order('timestamp', { ascending: true });
 
       if (error) throw error;
-      
+
       // Solo actualizar si hay cambios reales
       setMensajes(prev => {
         if (JSON.stringify(prev) === JSON.stringify(data)) return prev;
         return data || [];
       });
-      
+
       setTimeout(() => scrollToBottom(), 100);
     } catch (error: any) {
       console.error('Error al cargar mensajes:', error);
@@ -198,7 +198,7 @@ export const TransactionChat = ({ transaccionId, userId, estadoTransaccion }: Tr
 
   const enviarMensaje = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!nuevoMensaje.trim()) return;
 
     setEnviando(true);
@@ -225,9 +225,9 @@ export const TransactionChat = ({ transaccionId, userId, estadoTransaccion }: Tr
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file size (10MB)
-    if (file.size > 10485760) {
-      toast.error('El archivo es muy grande. Máximo 10MB');
+    // Validate file size (50MB)
+    if (file.size > 52428800) {
+      toast.error('El archivo es muy grande. Máximo 50MB');
       return;
     }
 
@@ -247,7 +247,7 @@ export const TransactionChat = ({ transaccionId, userId, estadoTransaccion }: Tr
       // Upload to storage
       const fileExt = archivoSeleccionado.name.split('.').pop();
       const fileName = `${userId}/${transaccionId}/${Date.now()}.${fileExt}`;
-      
+
       const { error: uploadError } = await supabase.storage
         .from('mensajes-archivos')
         .upload(fileName, archivoSeleccionado);
@@ -271,7 +271,7 @@ export const TransactionChat = ({ transaccionId, userId, estadoTransaccion }: Tr
         });
 
       if (messageError) throw messageError;
-      
+
       toast.success('Archivo enviado correctamente');
       setArchivoSeleccionado(null);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -316,58 +316,66 @@ export const TransactionChat = ({ transaccionId, userId, estadoTransaccion }: Tr
     } else if (date.toDateString() === yesterday.toDateString()) {
       return 'Ayer ' + date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
     } else {
-      return date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }) + ' ' + 
-             date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+      return date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short' }) + ' ' +
+        date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
     }
   };
 
   const puedeEliminarChat = ['iniciada', 'pendiente_pago'].includes(estadoTransaccion);
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="flex flex-col h-full overflow-hidden bg-slate-50/50 dark:bg-background/5">
       {/* Messages Area */}
-      <div 
+      <div
         ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-4 min-h-0" 
-        style={{ 
+        className="flex-1 overflow-y-auto overscroll-contain p-4 space-y-6 min-h-0 scroll-smooth"
+        style={{
           WebkitOverflowScrolling: 'touch',
           touchAction: 'pan-y'
         }}
       >
         {mensajes.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-muted-foreground">
-            <p>No hay mensajes aún. ¡Inicia la conversación!</p>
+          <div className="flex flex-col items-center justify-center h-full text-muted-foreground/50 gap-4">
+            <div className="w-16 h-16 rounded-2xl bg-primary/5 flex items-center justify-center rotate-3">
+              <MessageCircle className="w-8 h-8 text-primary/20" />
+            </div>
+            <p className="text-sm font-medium">Inicia la conversación</p>
           </div>
         ) : (
-          mensajes.map((mensaje) => {
+          mensajes.map((mensaje, index) => {
             const esMio = mensaje.emisor_id === userId;
             const esSistema = mensaje.tipo_mensaje !== 'usuario_normal';
+            const showAvatar = index === 0 || mensajes[index - 1].emisor_id !== mensaje.emisor_id;
 
             if (esSistema) {
-              const isShippingNotification = mensaje.contenido.includes('El vendedor ha enviado el producto') || 
-                                              mensaje.contenido.includes('vendedor ha enviado');
-              
-              return (
-                <div key={mensaje.id} className="flex justify-center my-4">
-                  <div className={cn(
-                    "px-5 py-4 rounded-xl shadow-md max-w-[90%] border-2",
-                    isShippingNotification 
-                      ? "bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 border-green-400/50"
-                      : "bg-primary/10 border-primary"
-                  )}>
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className={cn(
-                        "w-2 h-2 rounded-full animate-pulse",
-                        isShippingNotification ? "bg-green-500" : "bg-primary"
-                      )}></div>
-                      <span className={cn(
-                        "text-xs font-semibold uppercase tracking-wide",
-                        isShippingNotification ? "text-green-600 dark:text-green-400" : "text-primary"
-                      )}>
-                        Notificación del Sistema
-                      </span>
+              const isShippingNotification = mensaje.contenido.includes('El vendedor ha enviado el producto') ||
+                mensaje.contenido.includes('vendedor ha enviado');
+
+              if (isShippingNotification) {
+                return (
+                  <div key={mensaje.id} className="flex justify-center my-6 px-4">
+                    <div className="w-full max-w-sm bg-white dark:bg-card rounded-2xl shadow-sm border border-green-200/50 dark:border-green-900/50 overflow-hidden animate-in zoom-in-95 duration-300">
+                      <div className="bg-green-50/50 dark:bg-green-950/20 p-3 flex items-center gap-3 border-b border-green-100 dark:border-green-900/30">
+                        <div className="p-1.5 bg-green-500/10 rounded-full ring-1 ring-green-500/20">
+                          <Package className="w-4 h-4 text-green-600 dark:text-green-400" />
+                        </div>
+                        <span className="text-xs font-bold text-green-700 dark:text-green-400 uppercase tracking-wide">Actualización de Envío</span>
+                      </div>
+                      <div className="p-4">
+                        <ShippingNotification content={mensaje.contenido} />
+                      </div>
                     </div>
-                    <ShippingNotification content={mensaje.contenido} />
+                  </div>
+                );
+              }
+
+              return (
+                <div key={mensaje.id} className="flex justify-center my-6">
+                  <div className="flex items-center gap-2 px-3 py-1 bg-muted/50 border border-border/40 rounded-full shadow-sm">
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary/60 animate-pulse" />
+                    <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wide">
+                      {mensaje.contenido}
+                    </span>
                   </div>
                 </div>
               );
@@ -377,55 +385,57 @@ export const TransactionChat = ({ transaccionId, userId, estadoTransaccion }: Tr
               <div
                 key={mensaje.id}
                 className={cn(
-                  'flex',
+                  'flex items-end gap-2 animate-in slide-in-from-bottom-2 duration-300',
                   esMio ? 'justify-end' : 'justify-start'
                 )}
               >
                 <div
                   className={cn(
-                    'max-w-[70%] rounded-2xl px-4 py-2',
+                    'max-w-[75%] px-4 py-2.5 shadow-sm relative group',
                     esMio
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-muted text-foreground'
+                      ? 'bg-gradient-to-tr from-primary to-blue-600 text-white rounded-2xl rounded-tr-sm'
+                      : 'bg-white dark:bg-card border border-border/40 text-foreground rounded-2xl rounded-tl-sm'
                   )}
                 >
-                  <p className="text-sm break-words">{mensaje.contenido}</p>
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap break-words font-medium">{mensaje.contenido}</p>
+
+                  {/* Attachments rendering */}
                   {mensaje.url_archivo && (
-                    <div className="mt-2 max-w-full">
+                    <div className="mt-3 -mx-1 mb-1">
                       {mensaje.url_archivo.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
-                        <div className="space-y-2">
+                        <div className="relative group/image overflow-hidden rounded-xl bg-black/5 dark:bg-white/5">
                           <img
                             src={mensaje.url_archivo}
-                            alt="Imagen adjunta"
-                            className="w-full rounded-lg border border-border max-h-48 object-contain cursor-pointer hover:opacity-90 transition-opacity"
+                            alt="Adjunto"
                             onClick={() => window.open(mensaje.url_archivo!, '_blank')}
+                            className="w-full h-auto max-h-60 object-cover cursor-zoom-in transition-transform duration-500 group-hover/image:scale-105"
                           />
-                          <a
-                            href={mensaje.url_archivo}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 text-xs underline hover:opacity-80"
-                          >
-                            <ImageIcon className="w-3 h-3" />
-                            Abrir en nueva pestaña
-                          </a>
                         </div>
                       ) : (
                         <a
                           href={mensaje.url_archivo}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-2 text-xs underline hover:opacity-80"
+                          className={cn(
+                            "flex items-center gap-3 p-3 rounded-xl transition-colors",
+                            esMio ? "bg-white/10 hover:bg-white/20 text-white" : "bg-muted/50 hover:bg-muted text-foreground"
+                          )}
                         >
-                          <Paperclip className="w-3 h-3" />
-                          Ver archivo adjunto
+                          <div className={cn("p-2 rounded-lg", esMio ? "bg-white/10" : "bg-background shadow-sm")}>
+                            <FileText className="w-4 h-4" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium truncate">Archivo Adjunto</p>
+                            <span className="text-[10px] opacity-70">Clic para descargar</span>
+                          </div>
                         </a>
                       )}
                     </div>
                   )}
+
                   <p className={cn(
-                    'text-xs mt-1',
-                    esMio ? 'text-primary-foreground/70' : 'text-muted-foreground'
+                    'text-[10px] mt-1 text-right',
+                    esMio ? 'text-white/70' : 'text-muted-foreground'
                   )}>
                     {formatTimestamp(mensaje.timestamp)}
                   </p>
@@ -437,101 +447,90 @@ export const TransactionChat = ({ transaccionId, userId, estadoTransaccion }: Tr
       </div>
 
       {/* Input Area */}
-      <div className="border-t p-4 shrink-0">
-        {puedeEliminarChat && mensajes.length > 0 && (
-          <div className="mb-3">
+      <div className="p-4 bg-transparent shrink-0">
+        <div className="max-w-3xl mx-auto space-y-4">
+
+
+          {/* Floating Input Capsule */}
+          <div className="relative bg-white dark:bg-card rounded-[2rem] shadow-lg shadow-black/5 border border-border/50 p-1.5 flex items-end gap-2 transition-all focus-within:ring-2 focus-within:ring-primary/20">
+            {/* File Upload Button */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              className="hidden"
+              accept="image/*,.pdf"
+              onChange={handleFileSelect}
+            />
             <Button
               type="button"
-              variant="destructive"
-              size="sm"
-              onClick={eliminarChat}
-              disabled={eliminandoChat}
-              className="w-full"
+              variant="ghost"
+              size="icon"
+              className="rounded-full h-10 w-10 text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors shrink-0"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={subiendoArchivo || !!archivoSeleccionado}
             >
-              {eliminandoChat ? (
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+              <Paperclip className="w-5 h-5" />
+            </Button>
+
+            {/* Text Input */}
+            <div className="flex-1 min-w-0 py-2">
+              {archivoSeleccionado ? (
+                <div className="flex items-center gap-2 px-2 bg-primary/5 rounded-lg py-1">
+                  <div className="p-1.5 bg-background rounded-md shadow-sm">
+                    <Paperclip className="w-3.5 h-3.5 text-primary" />
+                  </div>
+                  <span className="text-sm font-medium truncate flex-1">{archivoSeleccionado.name}</span>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="h-6 w-6 rounded-full hover:bg-destructive/10 hover:text-destructive"
+                    onClick={cancelarArchivo}
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
               ) : (
-                <>
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Eliminar Chat
-                </>
+                <textarea
+                  value={nuevoMensaje}
+                  onChange={(e) => setNuevoMensaje(e.target.value)}
+                  placeholder="Escribe un mensaje..."
+                  disabled={enviando}
+                  className="w-full bg-transparent border-0 focus:ring-0 p-0 text-sm max-h-32 resize-none placeholder:text-muted-foreground/50 py-0.5 scrollbar-hide"
+                  rows={1}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      // trigger submit manually since it's not a form anymore or wrap in form
+                      // we'll just attach handler to button or handle here
+                      if (nuevoMensaje.trim()) document.getElementById('send-btn')?.click();
+                    }
+                  }}
+                />
+              )}
+            </div>
+
+            {/* Send Button */}
+            <Button
+              id="send-btn"
+              type="button" // changed to button to manual trigger
+              onClick={archivoSeleccionado ? enviarArchivo : (e) => enviarMensaje(e as any)}
+              size="icon"
+              className={cn(
+                "rounded-full h-10 w-10 shadow-sm transition-all duration-300 shrink-0",
+                (nuevoMensaje.trim() || archivoSeleccionado)
+                  ? "bg-primary hover:bg-primary/90 translate-x-0 opacity-100"
+                  : "bg-muted text-muted-foreground hover:bg-muted translate-x-2 opacity-0 w-0 p-0 overflow-hidden"
+              )}
+              disabled={enviando || subiendoArchivo || (!nuevoMensaje.trim() && !archivoSeleccionado)}
+            >
+              {enviando || subiendoArchivo ? (
+                <div className="w-4 h-4 border-2 border-white/50 border-t-white rounded-full animate-spin" />
+              ) : (
+                <Send className="w-5 h-5 ml-0.5" />
               )}
             </Button>
           </div>
-        )}
-
-        {/* Vista previa de archivo seleccionado */}
-        {archivoSeleccionado && (
-          <div className="mb-3 p-3 border rounded-lg bg-muted">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2 flex-1 min-w-0">
-                <Paperclip className="w-4 h-4 shrink-0" />
-                <span className="text-sm truncate">{archivoSeleccionado.name}</span>
-                <span className="text-xs text-muted-foreground shrink-0">
-                  ({(archivoSeleccionado.size / 1024).toFixed(1)} KB)
-                </span>
-              </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={enviarArchivo}
-                  disabled={subiendoArchivo}
-                >
-                  {subiendoArchivo ? (
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                  ) : (
-                    <>
-                      <Send className="w-4 h-4 mr-1" />
-                      Enviar
-                    </>
-                  )}
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={cancelarArchivo}
-                  disabled={subiendoArchivo}
-                >
-                  Cancelar
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        <form onSubmit={enviarMensaje} className="flex items-center gap-2">
-          <input
-            ref={fileInputRef}
-            type="file"
-            className="hidden"
-            accept="image/*,.pdf"
-            onChange={handleFileSelect}
-          />
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={subiendoArchivo || !!archivoSeleccionado}
-          >
-            <Paperclip className="w-4 h-4" />
-          </Button>
-          <Input
-            value={nuevoMensaje}
-            onChange={(e) => setNuevoMensaje(e.target.value)}
-            placeholder="Escribe un mensaje..."
-            disabled={enviando || !!archivoSeleccionado}
-          />
-          <Button
-            type="submit"
-            size="icon"
-            disabled={enviando || !nuevoMensaje.trim() || !!archivoSeleccionado}
-          >
-            <Send className="w-4 h-4" />
-          </Button>
-        </form>
+        </div>
       </div>
     </div>
   );

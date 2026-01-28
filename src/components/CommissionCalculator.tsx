@@ -6,11 +6,16 @@ import { Label } from "@/components/ui/label";
 
 export const CommissionCalculator = () => {
   const [amount, setAmount] = useState<string>("");
-  const commissionRate = 4.9; // 4.9% commission
-  const fixedFee = 1.00; // S/ 1.00 fixed fee
+  const commissionRate = 3; // 3% commission
+
 
   const calculateCommission = (value: number) => {
-    return (value * commissionRate) / 100 + fixedFee;
+    // Si es menor a 100 soles, cobra 3 soles fijos.
+    // Si es 100 soles o más, cobra el 3%.
+    if (value < 100) {
+      return 3.00;
+    }
+    return (value * commissionRate) / 100;
   };
 
   const numericAmount = parseFloat(amount) || 0;
@@ -34,7 +39,7 @@ export const CommissionCalculator = () => {
             </span>
           </h2>
           <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
-            El comprador paga el precio + comisión de seguridad ({commissionRate}% + S/ {fixedFee.toFixed(2)}). 
+            El comprador paga el precio + comisión de seguridad ({commissionRate}% o mínimo S/ 3.00 para montos menores a 100).
             El vendedor recibe el precio completo. Transparencia total.
           </p>
         </div>
@@ -62,7 +67,7 @@ export const CommissionCalculator = () => {
               {numericAmount > 0 && (
                 <div className="space-y-4 animate-fade-in">
                   <div className="h-px bg-gradient-primary opacity-20" />
-                  
+
                   <div className="grid sm:grid-cols-2 gap-4 sm:gap-6">
                     <div className="bg-gradient-to-br from-primary/10 to-secondary/10 rounded-lg p-4 sm:p-6 border-2 border-primary/30">
                       <div className="flex items-center gap-2 mb-2">

@@ -3,6 +3,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -59,6 +60,8 @@ const Dashboard = () => {
   const [loadingTransacciones, setLoadingTransacciones] = useState(true);
   const [tienePerfilFinanciero, setTienePerfilFinanciero] = useState(true);
   const [verificandoPerfil, setVerificandoPerfil] = useState(true);
+  const [directCode, setDirectCode] = useState('');
+  const [joiningDirectly, setJoiningDirectly] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -141,6 +144,43 @@ const Dashboard = () => {
     }
   };
 
+  const handleDirectJoin = async () => {
+    if (!directCode.trim()) {
+      toast.error('Ingresa el código de invitación');
+      return;
+    }
+
+    setJoiningDirectly(true);
+    try {
+      const { data: transactionId, error } = await supabase.rpc('join_transaction_by_code', {
+        _code: directCode.trim()
+      });
+
+      if (error) {
+        if (error.message.includes('NOT_AUTHENTICATED')) {
+          toast.error('Debes estar autenticado');
+        } else if (error.message.includes('INVALID_CODE')) {
+          toast.error('Código inválido');
+        } else if (error.message.includes('ALREADY_COMPLETE')) {
+          toast.error('Esta transacción ya tiene ambas partes asignadas');
+        } else if (error.message.includes('OWN_TRANSACTION')) {
+          toast.error('No puedes unirte a tu propia transacción');
+        } else {
+          toast.error('Error: ' + error.message);
+        }
+        return;
+      }
+
+      toast.success('¡Te uniste a la transacción!');
+      fetchTransacciones();
+      navigate(`/transaction/${transactionId}`);
+    } catch (error: any) {
+      toast.error('Error: ' + error.message);
+    } finally {
+      setJoiningDirectly(false);
+    }
+  };
+
   const transaccionesVendedor = transacciones.filter(t => t.vendedor_id === user?.id);
   const transaccionesComprador = transacciones.filter(t => t.comprador_id === user?.id);
   const transaccionesActivas = transacciones.filter(t =>
@@ -164,7 +204,7 @@ const Dashboard = () => {
 
       <main className="container mx-auto px-4 sm:px-6 pt-24 md:pt-28 pb-12 animate-fade-in">
 
-        {/* Header Section - Clean & Direct */}
+        {/* Header Section - Original Style */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 md:gap-6 mb-6 md:mb-8 border-b border-gray-200 pb-6 md:pb-8">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900">
@@ -200,145 +240,118 @@ const Dashboard = () => {
           </div>
         )}
 
-        {/* Quick Actions - Corporate Style */}
+        {/* Quick Actions - Compact Original Style */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-8 md:mb-10">
 
-          {/* Vendedor - Clean Professional Card */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6 md:p-8 shadow-sm hover:shadow-md transition-shadow group relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-6 md:p-8 opacity-5">
-              <Zap className="w-24 h-24 md:w-32 md:h-32 text-gray-900 transform rotate-12" />
-            </div>
-
-            <div className="relative z-10">
-              <div className="flex items-center gap-3 mb-3 md:mb-4">
-                <div className="p-1.5 md:p-2 bg-blue-50 rounded-lg border border-blue-100">
-                  <Zap className="w-4 h-4 md:w-5 md:h-5 text-blue-600" />
-                </div>
-                <span className="text-xs md:text-sm font-semibold text-blue-600 uppercase tracking-wide">Vendedor</span>
+          {/* Action: Vender */}
+          <IniciarVentaDialog onTransactionCreated={fetchTransacciones} fixedRole="vendedor">
+            <button className="bg-white rounded-xl border border-gray-200 p-6 md:p-8 shadow-sm hover:shadow-md transition-shadow group relative overflow-hidden text-left w-full h-full">
+              <div className="absolute top-0 right-0 p-6 md:p-8 opacity-5">
+                <Zap className="w-24 h-24 md:w-32 md:h-32 text-gray-900 transform rotate-12" />
               </div>
 
-              <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">Iniciar Venta</h3>
-              <p className="text-sm md:text-base text-gray-500 mb-6 md:mb-8 max-w-sm">
-                Genera una orden de pago segura.
-              </p>
-
-              <IniciarVentaDialog onTransactionCreated={fetchTransacciones}>
-                <Button className="w-full bg-gray-900 hover:bg-gray-800 text-white h-10 md:h-11 font-medium transition-all text-sm md:text-base">
-                  Crear Nueva Orden
-                </Button>
-              </IniciarVentaDialog>
-            </div>
-          </div>
-
-          {/* Comprador - Clean Professional Card */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6 md:p-8 shadow-sm hover:shadow-md transition-shadow group relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-6 md:p-8 opacity-5">
-              <ShoppingCart className="w-24 h-24 md:w-32 md:h-32 text-gray-900 transform -rotate-12" />
-            </div>
-
-            <div className="relative z-10">
-              <div className="flex items-center gap-3 mb-3 md:mb-4">
-                <div className="p-1.5 md:p-2 bg-emerald-50 rounded-lg border border-emerald-100">
-                  <ShoppingCart className="w-4 h-4 md:w-5 md:h-5 text-emerald-600" />
+              <div className="relative z-10">
+                <div className="flex items-center gap-3 mb-3 md:mb-4">
+                  <div className="p-1.5 md:p-2 bg-blue-50 rounded-lg border border-blue-100">
+                    <Zap className="w-4 h-4 md:w-5 md:h-5 text-blue-600" />
+                  </div>
+                  <span className="text-xs md:text-sm font-semibold text-blue-600 uppercase tracking-wide">Vendedor</span>
                 </div>
-                <span className="text-xs md:text-sm font-semibold text-emerald-600 uppercase tracking-wide">Comprador</span>
+                <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">Quiero vender un producto</h3>
+                <p className="text-sm md:text-base text-gray-500 max-w-sm">
+                  Crea una orden de pago segura y obtén un código para compartir.
+                </p>
+                <div className="mt-4 flex items-center text-blue-600 font-semibold group-hover:translate-x-1 transition-transform">
+                  Empezar <ArrowRight className="ml-2 w-4 h-4" />
+                </div>
+              </div>
+            </button>
+          </IniciarVentaDialog>
+
+          {/* Action: Comprar */}
+          <IniciarVentaDialog onTransactionCreated={fetchTransacciones} fixedRole="comprador">
+            <button className="bg-white rounded-xl border border-gray-200 p-6 md:p-8 shadow-sm hover:shadow-md transition-shadow group relative overflow-hidden text-left w-full h-full">
+              <div className="absolute top-0 right-0 p-6 md:p-8 opacity-5">
+                <ShoppingCart className="w-24 h-24 md:w-32 md:h-32 text-gray-900 transform -rotate-12" />
               </div>
 
-              <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">Unirse a Compra</h3>
-              <p className="text-sm md:text-base text-gray-500 mb-6 md:mb-8 max-w-sm">
-                Realiza un pago seguro con código.
-              </p>
-
-              <UnirseCompraDialog onJoined={fetchTransacciones}>
-                <Button variant="outline" className="w-full border-gray-300 text-gray-700 hover:bg-gray-50 h-10 md:h-11 font-medium transition-all text-sm md:text-base">
-                  Ingresar Código
-                </Button>
-              </UnirseCompraDialog>
-            </div>
-          </div>
+              <div className="relative z-10">
+                <div className="flex items-center gap-3 mb-3 md:mb-4">
+                  <div className="p-1.5 md:p-2 bg-emerald-50 rounded-lg border border-emerald-100">
+                    <ShoppingCart className="w-4 h-4 md:w-5 md:h-5 text-emerald-600" />
+                  </div>
+                  <span className="text-xs md:text-sm font-semibold text-emerald-600 uppercase tracking-wide">Comprador</span>
+                </div>
+                <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">Quiero comprar un producto</h3>
+                <p className="text-sm md:text-base text-gray-500 max-w-sm">
+                  Crea una solicitud de compra segura para enviársela a tu vendedor.
+                </p>
+                <div className="mt-4 flex items-center text-emerald-600 font-semibold group-hover:translate-x-1 transition-transform">
+                  Crear solicitud <ArrowRight className="ml-2 w-4 h-4" />
+                </div>
+              </div>
+            </button>
+          </IniciarVentaDialog>
         </div>
 
-        {/* Stats - Minimalist Metrics */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-6 mb-8 md:mb-10">
-          {[
-            { label: 'Activas', value: transaccionesActivas.length, icon: TrendingUp },
-            { label: 'Ventas', value: transaccionesVendedor.length, icon: Package },
-            { label: 'Compras', value: transaccionesComprador.length, icon: ShoppingCart }
-          ].map((stat, i) => (
-            <div key={i} className="bg-white p-4 md:p-6 rounded-xl border border-gray-100 shadow-sm">
-              <div className="flex items-center justify-between mb-2 md:mb-4">
-                <span className="text-xs md:text-sm font-medium text-gray-500">{stat.label}</span>
-                <stat.icon className="w-3.5 h-3.5 md:w-4 md:h-4 text-gray-400" />
-              </div>
-              <p className="text-xl md:text-3xl font-bold text-gray-900 tracking-tight">{stat.value}</p>
-            </div>
-          ))}
+        {/* Quick Access - Integrated Code Bar */}
+        <div className="bg-white rounded-xl border border-gray-200 p-4 md:p-6 mb-10 shadow-sm">
+          <h2 className="text-sm font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <Zap className="w-4 h-4 text-blue-500" />
+            Entrar a una transacción con código
+          </h2>
+          <div className="flex flex-col sm:flex-row gap-3">
+            <Input
+              placeholder="BK-XXXXXX"
+              value={directCode}
+              onChange={(e) => setDirectCode(e.target.value.toUpperCase())}
+              className="flex-1 bg-gray-50 border-gray-200 h-11 text-lg font-mono focus-visible:ring-blue-500"
+              onKeyDown={(e) => e.key === 'Enter' && handleDirectJoin()}
+            />
+            <Button
+              onClick={handleDirectJoin}
+              disabled={joiningDirectly}
+              className="h-11 px-8 font-bold shadow-sm"
+            >
+              {joiningDirectly ? 'Entrando...' : 'Ingresar'}
+            </Button>
+          </div>
+          <p className="text-gray-400 text-xs mt-3">
+            Ingresa el código que te compartió la otra parte para acceder directamente.
+          </p>
         </div>
 
-        {/* Transactions Table Section */}
+        {/* Activity Section */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-          <div className="p-4 md:p-6 border-b border-gray-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <h2 className="text-base md:text-lg font-bold text-gray-900">Actividad Reciente</h2>
-            <Link to="/transactions" className="text-xs md:text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline">
-              Ver historial completo
+          <div className="p-4 md:p-6 border-b border-gray-200 flex items-center justify-between">
+            <h2 className="text-base md:text-lg font-bold text-gray-900">Actividad reciente</h2>
+            <Link to="/transactions" className="text-xs md:text-sm font-medium text-blue-600 hover:underline">
+              Ver todo
             </Link>
           </div>
 
-          <div className="p-3 md:p-6">
-            <Tabs defaultValue="activas" className="w-full">
-              <div className="overflow-x-auto pb-4 md:pb-0 -mx-3 px-3 md:mx-0 md:px-0">
-                <TabsList className="w-max sm:w-auto bg-gray-100 p-1 rounded-lg mb-4 md:mb-6">
-                  {[
-                    { value: 'activas', label: 'En Curso' },
-                    { value: 'vendedor', label: 'Ventas' },
-                    { value: 'comprador', label: 'Compras' },
-                    { value: 'historial', label: 'Finalizadas' },
-                  ].map((tab) => (
-                    <TabsTrigger
-                      key={tab.value}
-                      value={tab.value}
-                      className="px-4 py-1.5 md:px-6 md:py-2 rounded-md text-xs md:text-sm font-medium data-[state=active]:bg-white data-[state=active]:text-gray-900 data-[state=active]:shadow-sm text-gray-500 transition-all"
-                    >
-                      {tab.label}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-              </div>
-
-              <div className="space-y-3 md:space-y-4">
-                <TabsContent value="activas" className="focus-visible:outline-none">
-                  {transaccionesActivas.length === 0 ? (
-                    <EmptyState title="Sin actividad" description="No hay operaciones en curso." />
-                  ) : (
-                    transaccionesActivas.map((t, i) => <TransaccionCard key={t.id} transaccion={t} userId={user.id} navigate={navigate} delay={i * 0} />)
-                  )}
-                </TabsContent>
-
-                <TabsContent value="vendedor" className="focus-visible:outline-none">
-                  {transaccionesVendedor.length === 0 ? (
-                    <EmptyState title="Sin ventas" description="No has generado ventas." />
-                  ) : (
-                    transaccionesVendedor.map((t, i) => <TransaccionCard key={t.id} transaccion={t} userId={user.id} navigate={navigate} delay={i * 0} />)
-                  )}
-                </TabsContent>
-
-                <TabsContent value="comprador" className="focus-visible:outline-none">
-                  {transaccionesComprador.length === 0 ? (
-                    <EmptyState title="Sin compras" description="No tienes compras." />
-                  ) : (
-                    transaccionesComprador.map((t, i) => <TransaccionCard key={t.id} transaccion={t} userId={user.id} navigate={navigate} delay={i * 0} />)
-                  )}
-                </TabsContent>
-
-                <TabsContent value="historial" className="focus-visible:outline-none">
-                  {transacciones.filter(t => ['completada', 'cancelada', 'cancelada_automatico'].includes(t.estado)).length === 0 ? (
-                    <EmptyState title="Historial vacío" description="Sin operaciones finalizadas." />
-                  ) : (
-                    transacciones.filter(t => ['completada', 'cancelada', 'cancelada_automatico'].includes(t.estado)).map((t, i) => <TransaccionCard key={t.id} transaccion={t} userId={user.id} navigate={navigate} delay={i * 0} />)
-                  )}
-                </TabsContent>
-              </div>
-            </Tabs>
+          <div className="p-4 md:p-6">
+            <div className="space-y-3">
+              {loadingTransacciones ? (
+                <div className="flex justify-center py-8">
+                  <div className="w-6 h-6 rounded-full border-2 border-primary/20 border-t-primary animate-spin" />
+                </div>
+              ) : transacciones.length === 0 ? (
+                <EmptyState
+                  title="Sin movimientos"
+                  description="Tus transacciones aparecerán aquí."
+                />
+              ) : (
+                transacciones.slice(0, 5).map((t) => (
+                  <TransaccionCard
+                    key={t.id}
+                    transaccion={t}
+                    userId={user.id}
+                    navigate={navigate}
+                  />
+                ))
+              )}
+            </div>
           </div>
         </div>
       </main>

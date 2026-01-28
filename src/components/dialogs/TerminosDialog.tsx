@@ -20,7 +20,7 @@ export const TerminosDialog = () => {
         <ScrollArea className="h-[calc(85vh-8rem)] pr-4">
           <div className="space-y-6 text-sm">
             <p className="text-muted-foreground">Última actualización: 27 de octubre de 2025</p>
-            
+
             <p>
               Bienvenido a Bakan. Al registrarte o utilizar nuestros servicios (el "Servicio"), aceptas haber leído, entendido y estar de acuerdo con los siguientes Términos y Condiciones (en adelante, "Términos"). Si no estás de acuerdo con estos Términos, no debes usar el Servicio.
             </p>
@@ -43,7 +43,7 @@ export const TerminosDialog = () => {
               <p className="mb-4">
                 Bakan ofrece un Servicio de intermediación para asegurar las compras y ventas online.
               </p>
-              
+
               <h4 className="font-semibold mb-2">2.1. Proceso para Productos Físicos:</h4>
               <ol className="list-decimal list-inside space-y-2 mb-4 text-muted-foreground">
                 <li>Acuerdo e Inicio: Vendedor y Comprador acuerdan los términos.</li>
@@ -69,7 +69,7 @@ export const TerminosDialog = () => {
             <section>
               <h3 className="font-semibold text-lg mb-3">4. Comisiones y Pagos</h3>
               <p className="mb-2">
-                <strong>Para el Comprador:</strong> Paga el precio acordado del producto más una comisión de seguridad del 4.9% + S/ 1.00 que garantiza la protección de la transacción.
+                <strong>Para el Comprador:</strong> Paga el precio acordado del producto más una comisión de seguridad del 3% + S/ 1.00 que garantiza la protección de la transacción.
               </p>
               <p className="text-muted-foreground">
                 <strong>Para el Vendedor:</strong> Recibe el precio completo del producto sin descuentos. La comisión de seguridad es asumida por el comprador.

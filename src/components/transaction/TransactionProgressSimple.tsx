@@ -22,30 +22,30 @@ export const TransactionProgressSimple = ({ estadoActual }: TransactionProgressS
   const isCompleted = estadoActual === 'completada';
 
   const steps = [
-    { 
-      id: 0, 
-      label: 'Conectar', 
+    {
+      id: 0,
+      label: 'Conectar',
       sublabel: 'Ambas partes',
       icon: UserPlus,
       states: ['iniciada']
     },
-    { 
-      id: 1, 
-      label: 'Pagar', 
+    {
+      id: 1,
+      label: 'Pagar',
       sublabel: 'Yape o Plin',
       icon: Wallet,
       states: ['pendiente_pago', 'pago_en_verificacion']
     },
-    { 
-      id: 2, 
-      label: 'Enviar', 
+    {
+      id: 2,
+      label: 'Enviar',
       sublabel: 'Producto físico',
       icon: Truck,
       states: ['pagada_retenida', 'enviado']
     },
-    { 
-      id: 3, 
-      label: '¡Listo!', 
+    {
+      id: 3,
+      label: '¡Listo!',
       sublabel: 'Completado',
       icon: isCompleted ? Check : PartyPopper,
       states: ['completada']
@@ -64,78 +64,25 @@ export const TransactionProgressSimple = ({ estadoActual }: TransactionProgressS
 
   return (
     <div className="w-full">
-      {/* Mobile: Vertical stepper */}
-      <div className="md:hidden space-y-3">
-        {steps.map((step, index) => {
-          const Icon = step.icon;
-          const isStepCompleted = index < currentStep;
-          const isCurrent = index === currentStep;
-          const isFuture = index > currentStep;
-          const isLastStepAndCompleted = index === 3 && isCompleted;
-
-          return (
-            <div 
-              key={step.id}
-              className={cn(
-                "flex items-center gap-4 p-3 rounded-xl transition-all duration-300",
-                isLastStepAndCompleted && "bg-success/10 border-2 border-success shadow-md",
-                isCurrent && !isLastStepAndCompleted && "bg-primary/10 border-2 border-primary shadow-md",
-                isStepCompleted && "bg-success/10 border border-success/30",
-                isFuture && "bg-muted/50 border border-transparent opacity-50"
-              )}
-            >
-              <div 
-                className={cn(
-                  "w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 transition-all",
-                  isStepCompleted && "bg-success text-success-foreground",
-                  isLastStepAndCompleted && "bg-success text-success-foreground",
-                  isCurrent && !isLastStepAndCompleted && "bg-primary text-primary-foreground animate-pulse",
-                  isFuture && "bg-muted text-muted-foreground"
-                )}
-              >
-                {isStepCompleted || isLastStepAndCompleted ? (
-                  <Check className="w-6 h-6" />
-                ) : (
-                  <Icon className="w-6 h-6" />
-                )}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className={cn(
-                  "font-semibold text-sm",
-                  (isStepCompleted || isCurrent) && "text-foreground",
-                  isFuture && "text-muted-foreground"
-                )}>
-                  {step.label}
-                </p>
-                <p className="text-xs text-muted-foreground truncate">
-                  {step.sublabel}
-                </p>
-              </div>
-              {(isStepCompleted || isLastStepAndCompleted) && (
-                <span className="text-success text-lg">✓</span>
-              )}
-              {isCurrent && !isLastStepAndCompleted && (
-                <span className="text-primary animate-bounce">👈</span>
-              )}
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Desktop: Horizontal stepper */}
-      <div className="hidden md:block">
-        <div className="relative flex items-center justify-between">
+      {/* Responsive Horizontal Stepper */}
+      <div className="w-full">
+        <div className="relative flex items-center justify-between px-2 sm:px-0">
           {/* Progress line */}
-          <div className="absolute top-6 left-0 right-0 h-1 bg-muted mx-8 rounded-full overflow-hidden">
-            <div 
+          <div className="absolute top-4 sm:top-5 left-0 right-0 h-0.5 sm:h-1 bg-muted mx-6 sm:mx-8 rounded-full overflow-hidden -z-10 bg-slate-200 dark:bg-slate-800">
+            <div
               className={cn(
-                "h-full transition-all duration-700 ease-out",
-                isCompleted 
-                  ? "bg-gradient-to-r from-success to-success" 
-                  : "bg-gradient-to-r from-success to-primary"
+                "h-full transition-all duration-700 ease-out relative",
+                isCompleted
+                  ? "bg-gradient-to-r from-success to-success"
+                  : "bg-gradient-to-r from-primary to-primary"
               )}
               style={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
-            />
+            >
+              {/* Pulsing glow effect on the progress line */}
+              {!isCompleted && currentStep > 0 && (
+                <div className="absolute right-0 top-0 h-full w-20 bg-gradient-to-r from-transparent to-white/40 animate-pulse" />
+              )}
+            </div>
           </div>
 
           {steps.map((step, index) => {
@@ -146,36 +93,30 @@ export const TransactionProgressSimple = ({ estadoActual }: TransactionProgressS
             const isLastStepAndCompleted = index === 3 && isCompleted;
 
             return (
-              <div key={step.id} className="relative z-10 flex flex-col items-center flex-1">
-                <div 
+              <div key={step.id} className="relative flex flex-col items-center flex-1">
+                <div
                   className={cn(
-                    "w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ring-4 ring-background",
-                    isStepCompleted && "bg-success text-success-foreground scale-100",
-                    isLastStepAndCompleted && "bg-success text-success-foreground scale-110 shadow-lg shadow-success/30",
-                    isCurrent && !isLastStepAndCompleted && "bg-primary text-primary-foreground scale-110 shadow-lg shadow-primary/30",
-                    isFuture && "bg-muted text-muted-foreground scale-90"
+                    "w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all duration-300 ring-4 ring-background",
+                    isStepCompleted && "bg-success text-success-foreground",
+                    isLastStepAndCompleted && "bg-success text-success-foreground shadow-lg shadow-success/30",
+                    isCurrent && !isLastStepAndCompleted && "bg-primary text-primary-foreground shadow-lg shadow-primary/30",
+                    isFuture && "bg-muted text-muted-foreground"
                   )}
                 >
                   {isStepCompleted || isLastStepAndCompleted ? (
-                    <Check className="w-5 h-5" />
+                    <Check className="w-4 h-4 sm:w-5 sm:h-5" />
                   ) : (
-                    <Icon className={cn("w-5 h-5", isCurrent && "animate-pulse")} />
+                    <Icon className={cn("w-4 h-4 sm:w-5 sm:h-5", isCurrent && "animate-pulse")} />
                   )}
                 </div>
-                <div className="mt-3 text-center">
+                <div className="mt-2 text-center">
                   <p className={cn(
-                    "font-semibold text-sm transition-colors",
+                    "font-semibold text-[10px] sm:text-xs transition-colors leading-tight",
                     (isStepCompleted || isCurrent) && "text-foreground",
                     isLastStepAndCompleted && "text-success",
                     isFuture && "text-muted-foreground"
                   )}>
                     {step.label}
-                  </p>
-                  <p className={cn(
-                    "text-xs mt-0.5",
-                    isLastStepAndCompleted ? "text-success font-medium" : (isCurrent ? "text-primary font-medium" : "text-muted-foreground")
-                  )}>
-                    {step.sublabel}
                   </p>
                 </div>
               </div>
@@ -183,6 +124,8 @@ export const TransactionProgressSimple = ({ estadoActual }: TransactionProgressS
           })}
         </div>
       </div>
+
+
     </div>
   );
 };

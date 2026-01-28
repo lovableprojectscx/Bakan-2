@@ -11,14 +11,22 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Plus } from 'lucide-react';
 
-export const IniciarVentaDialog = ({ onTransactionCreated, children }: { onTransactionCreated?: () => void, children?: React.ReactNode }) => {
+export const IniciarVentaDialog = ({
+  onTransactionCreated,
+  children,
+  fixedRole
+}: {
+  onTransactionCreated?: () => void,
+  children?: React.ReactNode,
+  fixedRole?: 'vendedor' | 'comprador'
+}) => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const [titulo, setTitulo] = useState('');
   const [descripcion, setDescripcion] = useState('');
   const [precio, setPrecio] = useState('');
-  const [miRol, setMiRol] = useState('');
+  const [miRol, setMiRol] = useState(fixedRole || '');
   const [creando, setCreando] = useState(false);
 
   // Generate an 8-character code (reduced collision probability from ~1.6M to ~2.8B combinations)
@@ -47,7 +55,7 @@ export const IniciarVentaDialog = ({ onTransactionCreated, children }: { onTrans
 
     setCreando(true);
     try {
-      const comision = precioNum * 0.049 + 1.00; // 4.9% + S/ 1.00
+      const comision = precioNum < 100 ? 3.00 : (precioNum * 0.03); // 3% o mínimo S/ 3.00 si es < 100
 
       // Generate unique code with retry logic
       let codigo = generarCodigo();
@@ -130,18 +138,20 @@ export const IniciarVentaDialog = ({ onTransactionCreated, children }: { onTrans
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
-          <div>
-            <Label>Mi Rol en esta Transacción *</Label>
-            <Select value={miRol} onValueChange={setMiRol}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecciona tu rol..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="vendedor">Soy el Vendedor</SelectItem>
-                <SelectItem value="comprador">Soy el Comprador</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {!fixedRole && (
+            <div>
+              <Label>Mi Rol en esta Transacción *</Label>
+              <Select value={miRol} onValueChange={setMiRol}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona tu rol..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="vendedor">Soy el Vendedor</SelectItem>
+                  <SelectItem value="comprador">Soy el Comprador</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div>
             <Label>Título del Producto *</Label>
             <Input placeholder="Ej: iPhone 14 Pro Max 256GB" value={titulo} onChange={(e) => setTitulo(e.target.value)} />
@@ -157,12 +167,12 @@ export const IniciarVentaDialog = ({ onTransactionCreated, children }: { onTrans
           {precio && miRol && (
             <div className="bg-muted p-3 rounded text-sm space-y-1">
               <p><strong>Precio del producto:</strong> S/ {parseFloat(precio || '0').toFixed(2)}</p>
-              <p><strong>Comisión Bakan (seguridad):</strong> S/ {(parseFloat(precio || '0') * 0.049 + 1).toFixed(2)}</p>
+              <p><strong>Comisión Bakan (seguridad):</strong> S/ {(parseFloat(precio || '0') < 100 ? 3.00 : parseFloat(precio || '0') * 0.03).toFixed(2)}</p>
               {miRol === 'vendedor' && (
                 <p className="text-success font-semibold"><strong>Recibirás:</strong> S/ {parseFloat(precio || '0').toFixed(2)}</p>
               )}
               {miRol === 'comprador' && (
-                <p className="text-primary font-semibold"><strong>Total a pagar:</strong> S/ {(parseFloat(precio || '0') + (parseFloat(precio || '0') * 0.049 + 1)).toFixed(2)}</p>
+                <p className="text-primary font-semibold"><strong>Total a pagar:</strong> S/ {(parseFloat(precio || '0') + (parseFloat(precio || '0') < 100 ? 3.00 : parseFloat(precio || '0') * 0.03)).toFixed(2)}</p>
               )}
             </div>
           )}
