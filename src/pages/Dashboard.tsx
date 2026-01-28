@@ -257,7 +257,7 @@ const Dashboard = () => {
                   </div>
                   <span className="text-xs md:text-sm font-semibold text-blue-600 uppercase tracking-wide">Vendedor</span>
                 </div>
-                <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">Quiero vender un producto</h3>
+                <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">Quiero vender</h3>
                 <p className="text-sm md:text-base text-gray-500 max-w-sm">
                   Crea una orden de pago segura y obtén un código para compartir.
                 </p>
@@ -282,7 +282,7 @@ const Dashboard = () => {
                   </div>
                   <span className="text-xs md:text-sm font-semibold text-emerald-600 uppercase tracking-wide">Comprador</span>
                 </div>
-                <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">Quiero comprar un producto</h3>
+                <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">Quiero comprar</h3>
                 <p className="text-sm md:text-base text-gray-500 max-w-sm">
                   Crea una solicitud de compra segura para enviársela a tu vendedor.
                 </p>
