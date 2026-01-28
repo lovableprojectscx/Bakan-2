@@ -31,7 +31,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
-        
+
         // Check admin role after setting user (deferred to avoid blocking)
         if (session?.user) {
           setTimeout(() => {
@@ -48,7 +48,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
-      
+
       if (session?.user) {
         setTimeout(() => {
           checkAdminRole(session.user.id);
@@ -75,8 +75,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const signUp = async (email: string, password: string, nombreCompleto: string, telefono: string) => {
-    const redirectUrl = `${window.location.origin}/`;
-    
+    // Use the environment variable if available, otherwise fall back to window.location.origin
+    const siteUrl = import.meta.env.VITE_SITE_URL || window.location.origin;
+    const redirectUrl = `${siteUrl}/`;
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -122,8 +124,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   const resetPassword = async (email: string) => {
-    const redirectUrl = `${window.location.origin}/auth?mode=reset`;
-    
+    // Use the environment variable if available, otherwise fall back to window.location.origin
+    const siteUrl = import.meta.env.VITE_SITE_URL || window.location.origin;
+    const redirectUrl = `${siteUrl}/auth?mode=reset`;
+
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: redirectUrl
     });

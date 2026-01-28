@@ -32,6 +32,14 @@ const resetPasswordSchema = z.object({
   email: z.string().trim().email('Correo electrónico inválido')
 });
 
+const updatePasswordSchema = z.object({
+  password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres').max(72, 'La contraseña es muy larga'),
+  confirmPassword: z.string()
+}).refine((data) => data.password === data.confirmPassword, {
+  message: 'Las contraseñas no coinciden',
+  path: ['confirmPassword']
+});
+
 const Auth = () => {
   const { signUp, signIn, resetPassword, user } = useAuth();
   const navigate = useNavigate();
@@ -39,8 +47,24 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [isProcessingCode, setIsProcessingCode] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   const invitationCode = searchParams.get('code');
+  const isResetMode = searchParams.get('mode') === 'reset';
+
+  useEffect(() => {
+    // Check for errors in the URL hash (from Supabase redirects)
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
+    const error = hashParams.get('error');
+    const errorDescription = hashParams.get('error_description');
+
+    if (error) {
+      setAuthError(errorDescription || 'Ha ocurrido un error de autenticación');
+      // Clean URL
+      window.history.replaceState(null, '', window.location.pathname);
+    }
+  }, []);
+
 
   // Handle automatic join if user is logged in and has code
   useEffect(() => {
@@ -77,12 +101,12 @@ const Auth = () => {
     autoJoinTransaction();
   }, [user, invitationCode, navigate, isProcessingCode]);
 
-  // Redirect if already logged in (but not with invitation code)
+  // Redirect if already logged in (but not with invitation code AND not resetting password)
   useEffect(() => {
-    if (user && !invitationCode && !isProcessingCode) {
+    if (user && !invitationCode && !isProcessingCode && !isResetMode) {
       navigate('/dashboard');
     }
-  }, [user, invitationCode, navigate, isProcessingCode]);
+  }, [user, invitationCode, navigate, isProcessingCode, isResetMode]);
 
   const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -175,6 +199,121 @@ const Auth = () => {
       setLoading(false);
     }
   };
+
+  const handleUpdatePassword = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setLoading(true);
+
+    const formData = new FormData(e.currentTarget);
+    const data = {
+      password: formData.get('password') as string,
+      confirmPassword: formData.get('confirmPassword') as string
+    };
+
+    try {
+      const validated = updatePasswordSchema.parse(data);
+      const { error } = await supabase.auth.updateUser({ password: validated.password });
+
+      if (error) {
+        toast.error('Error al actualizar la contraseña: ' + error.message);
+      } else {
+        toast.success('Contraseña actualizada correctamente');
+        // Clear param/mode and redirect to dashboard
+        navigate('/dashboard');
+      }
+    } catch (err) {
+      if (err instanceof z.ZodError) {
+        toast.error(err.errors[0].message);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (authError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-4">
+        <Card className="w-full max-w-md shadow-strong border-2 border-destructive/20">
+          <CardHeader className="space-y-4">
+            <div className="flex justify-center bg-destructive/10 w-16 h-16 rounded-full items-center mx-auto mb-2">
+              <Lock className="h-8 w-8 text-destructive" />
+            </div>
+            <CardTitle className="text-xl text-center text-destructive">Enlace Expirado o Inválido</CardTitle>
+            <CardDescription className="text-center text-balance">
+              {authError}
+            </CardDescription>
+          </CardHeader>
+          <CardFooter className="flex-col gap-3">
+            <p className="text-sm text-center text-muted-foreground">
+              Los enlaces de seguridad tienen un tiempo límite. Por favor, solicita uno nuevo.
+            </p>
+            <Button onClick={() => {
+              setAuthError(null);
+              setShowResetPassword(true);
+              navigate('/auth');
+            }} className="w-full">
+              Solicitar nuevo enlace
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
+
+  if (isResetMode) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-4">
+        <Card className="w-full max-w-md shadow-strong border-2">
+          <CardHeader className="space-y-4">
+            <div className="flex justify-center">
+              <img src={logo} alt="Bakan Logo" className="h-16" />
+            </div>
+            <CardTitle className="text-2xl text-center">Nueva Contraseña</CardTitle>
+            <CardDescription className="text-center">
+              Ingresa tu nueva contraseña para segura tu cuenta
+            </CardDescription>
+          </CardHeader>
+          <form onSubmit={handleUpdatePassword}>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="new-password">Nueva contraseña</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="new-password"
+                    name="password"
+                    type="password"
+                    placeholder="••••••••"
+                    className="pl-10"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirm-new-password">Confirmar contraseña</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="confirm-new-password"
+                    name="confirmPassword"
+                    type="password"
+                    placeholder="••••••••"
+                    className="pl-10"
+                    required
+                  />
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? 'Actualizando...' : 'Actualizar contraseña'}
+              </Button>
+            </CardFooter>
+          </form>
+        </Card>
+      </div>
+    );
+  }
 
   if (showResetPassword) {
     return (
