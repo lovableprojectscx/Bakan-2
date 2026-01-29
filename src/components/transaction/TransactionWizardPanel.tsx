@@ -135,15 +135,28 @@ export const TransactionWizardPanel = ({
       const fileExt = file.name.split('.').pop();
       const fileName = `${user?.id}/${transaccion.id}/voucher-${Date.now()}.${fileExt}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from('vouchers')
-        .upload(fileName, file);
+      console.log('Iniciando subida de voucher:', fileName); // Log start
 
-      if (uploadError) throw uploadError;
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from('vouchers')
+        .upload(fileName, file, {
+          upsert: true
+        });
+
+      if (uploadError) {
+        console.error('Storage Upload Error:', uploadError);
+        throw new Error(`Error subiendo archivo (Storage): ${uploadError.message}`);
+      }
+
+      console.log('Subida exitosa, obteniendo URL publica...'); // Log success upload
 
       const { data: { publicUrl } } = supabase.storage
         .from('vouchers')
         .getPublicUrl(fileName);
+
+      console.log('Public URL:', publicUrl); // Log URL
+
+      console.log('Insertando en pruebas_transaccion...'); // Log DB insert start
 
       const { error: proofError } = await supabase
         .from('pruebas_transaccion')
@@ -155,7 +168,12 @@ export const TransactionWizardPanel = ({
           descripcion: 'Voucher de pago del comprador'
         });
 
-      if (proofError) throw proofError;
+      if (proofError) {
+        console.error('DB Insert Error (pruebas_transaccion):', proofError);
+        throw new Error(`Error guardando referencia (DB): ${proofError.message}`);
+      }
+
+      console.log('Insertando en transacciones...'); // Log DB update start
 
       const { error: updateError } = await supabase
         .from('transacciones')
@@ -165,7 +183,10 @@ export const TransactionWizardPanel = ({
         } as any)
         .eq('id', transaccion.id);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('DB Update Error (transacciones):', updateError);
+        throw new Error(`Error actualizando estado (DB): ${updateError.message}`);
+      }
 
       // Enviar notificación al admin por email
       try {
@@ -183,7 +204,8 @@ export const TransactionWizardPanel = ({
       setArchivoVoucher(null);
       onTransactionUpdate();
     } catch (error: any) {
-      toast.error('Error al subir voucher: ' + error.message);
+      console.error('FULL CATCH ERROR:', error);
+      toast.error(error.message || 'Error desconocido al subir voucher');
     } finally {
       setSubiendoVoucher(false);
     }
