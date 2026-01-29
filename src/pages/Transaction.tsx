@@ -247,7 +247,7 @@ const Transaction = () => {
           <Button
             onClick={() => setShowChat(!showChat)}
             size="lg"
-            className={`h - 14 rounded - full shadow - lg pointer - events - auto transition - all duration - 300 hover: scale - 105 ${showChat ? 'bg-destructive hover:bg-destructive/90 px-4' : 'bg-primary hover:bg-primary/90 px-6'} `}
+            className={`h-14 rounded-full shadow-lg pointer-events-auto transition-all duration-300 hover:scale-105 ${showChat ? 'bg-destructive hover:bg-destructive/90 px-4' : 'bg-primary hover:bg-primary/90 px-6'} `}
           >
             {showChat ? (
               <div className="flex items-center gap-2">
