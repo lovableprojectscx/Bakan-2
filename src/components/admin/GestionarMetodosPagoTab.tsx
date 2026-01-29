@@ -78,8 +78,8 @@ export function GestionarMetodosPagoTab() {
   };
 
   const agregarMetodo = async () => {
-    if (!nuevoMetodo.banco || !nuevoMetodo.titular || !nuevoMetodo.numero_cuenta_o_celular) {
-      toast.error("Por favor completa todos los campos obligatorios");
+    if (!nuevoMetodo.banco || !nuevoMetodo.titular) {
+      toast.error("Por favor completa los campos obligatorios (Banco y Titular)");
       return;
     }
 
@@ -202,10 +202,10 @@ export function GestionarMetodosPagoTab() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="numero">Número de Cuenta / Celular *</Label>
+              <Label htmlFor="numero">Número de Cuenta / Celular</Label>
               <Input
                 id="numero"
-                placeholder="Número"
+                placeholder="Número (Opcional)"
                 value={nuevoMetodo.numero_cuenta_o_celular}
                 onChange={(e) =>
                   setNuevoMetodo({ ...nuevoMetodo, numero_cuenta_o_celular: e.target.value })
@@ -319,11 +319,10 @@ export function GestionarMetodosPagoTab() {
 
                     <div className="flex items-center gap-2 mt-2">
                       <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          metodo.esta_activa
-                            ? "bg-green-100 text-green-800"
-                            : "bg-gray-100 text-gray-800"
-                        }`}
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${metodo.esta_activa
+                          ? "bg-green-100 text-green-800"
+                          : "bg-gray-100 text-gray-800"
+                          }`}
                       >
                         {metodo.esta_activa ? "Activo" : "Inactivo"}
                       </span>

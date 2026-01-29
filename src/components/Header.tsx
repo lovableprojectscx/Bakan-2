@@ -118,6 +118,12 @@ export const Header = () => {
                     <User className="w-4 h-4 mr-2" />
                     Mi Perfil
                   </Button>
+                  {isAdmin && (
+                    <Button variant="outline" className="w-full justify-start border-primary text-primary" onClick={() => { navigate('/admin'); setMobileMenuOpen(false); }}>
+                      <Shield className="w-4 h-4 mr-2" />
+                      Panel Admin
+                    </Button>
+                  )}
                   <Button onClick={() => { navigate('/dashboard'); setMobileMenuOpen(false); }} className="w-full">Mi Panel</Button>
                   <Button variant="destructive" className="w-full" onClick={() => { signOut(); setMobileMenuOpen(false); }}>
                     <LogOut className="w-4 h-4 mr-2" />

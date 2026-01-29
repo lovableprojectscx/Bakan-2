@@ -2,12 +2,12 @@ import { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  DollarSign, 
-  Package, 
-  Users, 
+import {
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  Package,
+  Users,
   AlertTriangle,
   Clock,
   CheckCircle,
@@ -80,22 +80,33 @@ export const AdminDashboard = () => {
 
       // Calculate stats
       const hoy = new Date().toISOString().split('T')[0];
-      const transaccionesHoy = transacciones?.filter(t => 
+      const transaccionesHoy = transacciones?.filter(t =>
         t.fecha_creacion?.startsWith(hoy)
       ) || [];
 
       const completadas = transacciones?.filter(t => t.estado === 'completada') || [];
-      const tasaExito = transacciones && transacciones.length > 0 
-        ? (completadas.length / transacciones.length) * 100 
+      const tasaExito = transacciones && transacciones.length > 0
+        ? (completadas.length / transacciones.length) * 100
         : 0;
 
       setStats({
         totalTransacciones: transacciones?.length || 0,
-        volumenTotal: transacciones?.reduce((acc, t) => acc + (t.precio_producto || 0), 0) || 0,
-        comisionesTotal: transacciones?.reduce((acc, t) => acc + (t.comision_bakan || 0), 0) || 0,
+        // Only count paid transactions for volume and commissions
+        volumenTotal: transacciones?.reduce((acc, t) => {
+          const isPaid = ['pagada_retenida', 'enviado', 'completada', 'en_disputa'].includes(t.estado);
+          return acc + (isPaid ? (t.precio_producto || 0) : 0);
+        }, 0) || 0,
+        comisionesTotal: transacciones?.reduce((acc, t) => {
+          const isPaid = ['pagada_retenida', 'enviado', 'completada', 'en_disputa'].includes(t.estado);
+          return acc + (isPaid ? (t.comision_bakan || 0) : 0);
+        }, 0) || 0,
         usuariosActivos: usuariosCount || 0,
         transaccionesHoy: transaccionesHoy.length,
-        volumenHoy: transaccionesHoy.reduce((acc, t) => acc + (t.precio_producto || 0), 0),
+        // Only count paid transactions for today's volume
+        volumenHoy: transaccionesHoy.reduce((acc, t) => {
+          const isPaid = ['pagada_retenida', 'enviado', 'completada', 'en_disputa'].includes(t.estado);
+          return acc + (isPaid ? (t.precio_producto || 0) : 0);
+        }, 0),
         disputasActivas: disputasCount || 0,
         tasaExito: Math.round(tasaExito)
       });
@@ -108,7 +119,7 @@ export const AdminDashboard = () => {
       });
 
       const chartDataPrepared = last7Days.map(fecha => {
-        const dayTransactions = transacciones?.filter(t => 
+        const dayTransactions = transacciones?.filter(t =>
           t.fecha_creacion?.startsWith(fecha)
         ) || [];
         return {
@@ -297,27 +308,27 @@ export const AdminDashboard = () => {
                 <AreaChart data={chartData}>
                   <defs>
                     <linearGradient id="colorVolumen" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                   <XAxis dataKey="fecha" className="text-xs" />
                   <YAxis className="text-xs" />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: 'hsl(var(--card))', 
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: 'hsl(var(--card))',
                       border: '1px solid hsl(var(--border))',
                       borderRadius: '8px'
                     }}
                     formatter={(value: number) => [`S/ ${value.toFixed(2)}`, 'Volumen']}
                   />
-                  <Area 
-                    type="monotone" 
-                    dataKey="volumen" 
-                    stroke="#3b82f6" 
-                    fillOpacity={1} 
-                    fill="url(#colorVolumen)" 
+                  <Area
+                    type="monotone"
+                    dataKey="volumen"
+                    stroke="#3b82f6"
+                    fillOpacity={1}
+                    fill="url(#colorVolumen)"
                     strokeWidth={2}
                   />
                 </AreaChart>
@@ -369,9 +380,9 @@ export const AdminDashboard = () => {
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis dataKey="fecha" className="text-xs" />
                 <YAxis className="text-xs" />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'hsl(var(--card))', 
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: 'hsl(var(--card))',
                     border: '1px solid hsl(var(--border))',
                     borderRadius: '8px'
                   }}
@@ -396,8 +407,8 @@ export const AdminDashboard = () => {
           ) : (
             <div className="space-y-3">
               {actividadReciente.map((actividad) => (
-                <div 
-                  key={actividad.id} 
+                <div
+                  key={actividad.id}
                   className="flex items-center gap-3 p-3 rounded-lg bg-muted/50"
                 >
                   <div className="w-2 h-2 rounded-full bg-primary" />
