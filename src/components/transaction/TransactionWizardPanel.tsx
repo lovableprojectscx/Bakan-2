@@ -391,14 +391,19 @@ export const TransactionWizardPanel = ({
                             <p className="text-muted-foreground">{cuenta.instrucciones_adicionales}</p>
                           )}
                           {cuenta.qr_image_url && (
-                            <div className="pt-2">
+                            <div className="pt-2 flex flex-col items-center gap-2">
+                              <img
+                                src={cuenta.qr_image_url}
+                                alt={`QR ${cuenta.banco}`}
+                                className="w-48 h-48 object-contain border rounded-lg"
+                              />
                               <Button
                                 variant="outline"
                                 size="sm"
                                 onClick={() => window.open(cuenta.qr_image_url!, '_blank')}
                                 className="w-full"
                               >
-                                📱 Ver QR de Pago
+                                📱 Ver QR en pantalla completa
                               </Button>
                             </div>
                           )}
