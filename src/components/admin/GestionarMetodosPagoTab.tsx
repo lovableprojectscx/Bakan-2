@@ -88,6 +88,7 @@ export function GestionarMetodosPagoTab() {
       let qrUrl = null;
       if (archivoQR) {
         qrUrl = await subirQR(archivoQR);
+        if (!qrUrl) throw new Error("La carga de imagen falló");
       }
 
       const { error } = await supabase
