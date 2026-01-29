@@ -418,7 +418,7 @@ export const TransactionWizardPanel = ({
                         <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
                         <div className="text-sm text-amber-700 dark:text-amber-400">
                           <p className="font-semibold mb-1">Monto a pagar:</p>
-                          <p className="text-xl font-bold">S/ {transaccion.precio_producto.toFixed(2)}</p>
+                          <p className="text-xl font-bold">S/ {(transaccion.precio_producto + transaccion.comision_bakan).toFixed(2)}</p>
                         </div>
                       </div>
                     </div>
