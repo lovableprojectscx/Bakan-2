@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
 import { toast } from 'sonner';
-import { Lock, Mail, User, ArrowLeft } from 'lucide-react';
+import { Lock, Mail, User, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import logo from '@/assets/logo.png';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -48,6 +48,11 @@ const Auth = () => {
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [isProcessingCode, setIsProcessingCode] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [showPasswordSignin, setShowPasswordSignin] = useState(false);
+  const [showPasswordSignup, setShowPasswordSignup] = useState(false);
+  const [showPasswordSignupConfirm, setShowPasswordSignupConfirm] = useState(false);
+  const [showPasswordReset, setShowPasswordReset] = useState(false);
+  const [showPasswordResetConfirm, setShowPasswordResetConfirm] = useState(false);
 
   const invitationCode = searchParams.get('code');
   const isResetMode = searchParams.get('mode') === 'reset';
@@ -282,11 +287,18 @@ const Auth = () => {
                   <Input
                     id="new-password"
                     name="password"
-                    type="password"
+                    type={showPasswordReset ? "text" : "password"}
                     placeholder="••••••••"
-                    className="pl-10"
+                    className="pl-10 pr-10"
                     required
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswordReset(!showPasswordReset)}
+                    className="absolute right-3 top-3 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showPasswordReset ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
                 </div>
               </div>
               <div className="space-y-2">
@@ -296,11 +308,18 @@ const Auth = () => {
                   <Input
                     id="confirm-new-password"
                     name="confirmPassword"
-                    type="password"
+                    type={showPasswordResetConfirm ? "text" : "password"}
                     placeholder="••••••••"
-                    className="pl-10"
+                    className="pl-10 pr-10"
                     required
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswordResetConfirm(!showPasswordResetConfirm)}
+                    className="absolute right-3 top-3 text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {showPasswordResetConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
                 </div>
               </div>
             </CardContent>
@@ -411,11 +430,18 @@ const Auth = () => {
                     <Input
                       id="signin-password"
                       name="password"
-                      type="password"
+                      type={showPasswordSignin ? "text" : "password"}
                       placeholder="••••••••"
-                      className="pl-10"
+                      className="pl-10 pr-10"
                       required
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPasswordSignin(!showPasswordSignin)}
+                      className="absolute right-3 top-3 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {showPasswordSignin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
                   </div>
                 </div>
                 <Button
@@ -488,11 +514,18 @@ const Auth = () => {
                     <Input
                       id="signup-password"
                       name="password"
-                      type="password"
+                      type={showPasswordSignup ? "text" : "password"}
                       placeholder="••••••••"
-                      className="pl-10 h-9"
+                      className="pl-10 pr-10 h-9"
                       required
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPasswordSignup(!showPasswordSignup)}
+                      className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {showPasswordSignup ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
                   </div>
                 </div>
                 <div className="space-y-1">
@@ -502,11 +535,18 @@ const Auth = () => {
                     <Input
                       id="signup-confirm-password"
                       name="confirmPassword"
-                      type="password"
+                      type={showPasswordSignupConfirm ? "text" : "password"}
                       placeholder="••••••••"
-                      className="pl-10 h-9"
+                      className="pl-10 pr-10 h-9"
                       required
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowPasswordSignupConfirm(!showPasswordSignupConfirm)}
+                      className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {showPasswordSignupConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
                   </div>
                 </div>
                 <Button type="submit" className="w-full shadow-soft h-10" disabled={loading}>
